@@ -1,12 +1,9 @@
 extern crate cmake;
 
-use std::env;
-
 fn main() {
-    let target = env::var("TARGET").unwrap();
-
     let mut config = cmake::Config::new(".");
 
+    #[cfg(feature = "static")]
     config.define("LIBTYPE", "STATIC");
 
     config.define("ALSOFT_UTILS", "OFF");
@@ -24,15 +21,13 @@ fn main() {
     config.define("ALSOFT_AMBDEC_PRESETS", "OFF");
 
     config.define("ALSOFT_CONFIG", "OFF");
-    config.define("ALSOFT_INSTALL", "OFF");
+    config.define("ALSOFT_INSTALL", "ON");
 
     let dst = config.build();
+    let lib = dst.join("lib");
 
-    println!("cargo:rustc-link-search=native={}", dst.join("lib").display());
+    println!("cargo:rustc-link-search=native={}", lib.display());
 
-    if target.contains("windows") {
-        println!("cargo:rustc-link-lib=static=OpenAL32");
-    } else {
-        println!("cargo:rustc-link-lib=static=openal");
-    }
+    #[cfg(not(feature = "static"))]
+    println!("cargo:rustc-link-lib=static=common");
 }

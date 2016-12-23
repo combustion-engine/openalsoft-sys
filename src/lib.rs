@@ -6,14 +6,26 @@ pub mod types;
 pub mod consts;
 
 #[cfg(feature = "presets")]
-pub mod presets;
+pub mod ambisonic_presets;
+
+#[cfg(feature = "presets")]
+pub mod efx_presets;
 
 #[cfg(feature = "hrtf")]
 pub mod hrtf;
 
 pub use types::*;
 
+#[cfg_attr(all(feature = "static", target_os = "linux"), link(name = "openal", kind = "static"))]
+#[cfg_attr(all(not(feature = "static"), target_os = "linux"), link(name = "openal"))]
+#[cfg_attr(all(feature = "static", target_os = "macos"), link(name = "OpenAL", kind = "static"))]
+#[cfg_attr(all(not(feature = "static"), target_os = "macos"), link(name = "OpenAL", kind = "framework"))]
+#[cfg_attr(all(feature = "static", target_os = "windows"), link(name = "OpenAL32", kind = "static"))]
+#[cfg_attr(all(not(feature = "static"), target_os = "windows"), link(name = "OpenAL32"))]
+extern {}
+
 pub enum ALCdevice_struct {}
+
 pub enum ALCcontext_struct {}
 
 #[repr(C)]
@@ -48,14 +60,6 @@ pub struct EFXEAXREVERBPROPERTIES {
 impl ::std::default::Default for EFXEAXREVERBPROPERTIES {
     fn default() -> Self { unsafe { ::std::mem::zeroed() } }
 }
-
-#[cfg(target_os = "windows")]
-#[link(name = "OpenAL32", kind = "static")]
-extern {}
-
-#[cfg(not(target_os = "windows"))]
-#[link(name = "openal", kind = "static")]
-extern {}
 
 extern "C" {
     pub fn alDopplerFactor(value: ALfloat);

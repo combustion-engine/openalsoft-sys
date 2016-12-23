@@ -8,6 +8,7 @@ version = "0.1.0"
 cmake = "0.1.20"
 
 [features]
-default = ["presets", "hrtf"]
+default = ["presets", "hrtf", "static"]
 hrtf = []
 presets = []
+static = []
