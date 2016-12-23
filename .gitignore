@@ -5,3 +5,7 @@ include/SLES
 include/sndio.h
 include/sys
 openal-soft.kdev4
+.idea
+target
+Cargo.lock
+*.iml
