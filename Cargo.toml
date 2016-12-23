@@ -6,3 +6,8 @@ version = "0.1.0"
 
 [build-dependencies]
 cmake = "0.1.20"
+
+[features]
+default = ["presets", "hrtf"]
+hrtf = []
+presets = []
