@@ -1,0 +1,607 @@
+use ::types::*;
+use ::consts::*;
+
+pub const AL_DIRECT_FILTER: ALenum = 131077;
+pub const AL_AUXILIARY_SEND_FILTER: ALenum = 131078;
+pub const AL_AIR_ABSORPTION_FACTOR: ALenum = 131079;
+pub const AL_ROOM_ROLLOFF_FACTOR: ALenum = 131080;
+pub const AL_CONE_OUTER_GAINHF: ALenum = 131081;
+pub const AL_DIRECT_FILTER_GAINHF_AUTO: ALenum = 131082;
+pub const AL_AUXILIARY_SEND_FILTER_GAIN_AUTO: ALenum = 131083;
+pub const AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO: ALenum = 131084;
+pub const AL_REVERB_DENSITY: ALenum = 1;
+pub const AL_REVERB_DIFFUSION: ALenum = 2;
+pub const AL_REVERB_GAIN: ALenum = 3;
+pub const AL_REVERB_GAINHF: ALenum = 4;
+pub const AL_REVERB_DECAY_TIME: ALenum = 5;
+pub const AL_REVERB_DECAY_HFRATIO: ALenum = 6;
+pub const AL_REVERB_REFLECTIONS_GAIN: ALenum = 7;
+pub const AL_REVERB_REFLECTIONS_DELAY: ALenum = 8;
+pub const AL_REVERB_LATE_REVERB_GAIN: ALenum = 9;
+pub const AL_REVERB_LATE_REVERB_DELAY: ALenum = 10;
+pub const AL_REVERB_AIR_ABSORPTION_GAINHF: ALenum = 11;
+pub const AL_REVERB_ROOM_ROLLOFF_FACTOR: ALenum = 12;
+pub const AL_REVERB_DECAY_HFLIMIT: ALenum = 13;
+pub const AL_EAXREVERB_DENSITY: ALenum = 1;
+pub const AL_EAXREVERB_DIFFUSION: ALenum = 2;
+pub const AL_EAXREVERB_GAIN: ALenum = 3;
+pub const AL_EAXREVERB_GAINHF: ALenum = 4;
+pub const AL_EAXREVERB_GAINLF: ALenum = 5;
+pub const AL_EAXREVERB_DECAY_TIME: ALenum = 6;
+pub const AL_EAXREVERB_DECAY_HFRATIO: ALenum = 7;
+pub const AL_EAXREVERB_DECAY_LFRATIO: ALenum = 8;
+pub const AL_EAXREVERB_REFLECTIONS_GAIN: ALenum = 9;
+pub const AL_EAXREVERB_REFLECTIONS_DELAY: ALenum = 10;
+pub const AL_EAXREVERB_REFLECTIONS_PAN: ALenum = 11;
+pub const AL_EAXREVERB_LATE_REVERB_GAIN: ALenum = 12;
+pub const AL_EAXREVERB_LATE_REVERB_DELAY: ALenum = 13;
+pub const AL_EAXREVERB_LATE_REVERB_PAN: ALenum = 14;
+pub const AL_EAXREVERB_ECHO_TIME: ALenum = 15;
+pub const AL_EAXREVERB_ECHO_DEPTH: ALenum = 16;
+pub const AL_EAXREVERB_MODULATION_TIME: ALenum = 17;
+pub const AL_EAXREVERB_MODULATION_DEPTH: ALenum = 18;
+pub const AL_EAXREVERB_AIR_ABSORPTION_GAINHF: ALenum = 19;
+pub const AL_EAXREVERB_HFREFERENCE: ALenum = 20;
+pub const AL_EAXREVERB_LFREFERENCE: ALenum = 21;
+pub const AL_EAXREVERB_ROOM_ROLLOFF_FACTOR: ALenum = 22;
+pub const AL_EAXREVERB_DECAY_HFLIMIT: ALenum = 23;
+pub const AL_CHORUS_WAVEFORM: ALenum = 1;
+pub const AL_CHORUS_PHASE: ALenum = 2;
+pub const AL_CHORUS_RATE: ALenum = 3;
+pub const AL_CHORUS_DEPTH: ALenum = 4;
+pub const AL_CHORUS_FEEDBACK: ALenum = 5;
+pub const AL_CHORUS_DELAY: ALenum = 6;
+pub const AL_DISTORTION_EDGE: ALenum = 1;
+pub const AL_DISTORTION_GAIN: ALenum = 2;
+pub const AL_DISTORTION_LOWPASS_CUTOFF: ALenum = 3;
+pub const AL_DISTORTION_EQCENTER: ALenum = 4;
+pub const AL_DISTORTION_EQBANDWIDTH: ALenum = 5;
+pub const AL_ECHO_DELAY: ALenum = 1;
+pub const AL_ECHO_LRDELAY: ALenum = 2;
+pub const AL_ECHO_DAMPING: ALenum = 3;
+pub const AL_ECHO_FEEDBACK: ALenum = 4;
+pub const AL_ECHO_SPREAD: ALenum = 5;
+pub const AL_FLANGER_WAVEFORM: ALenum = 1;
+pub const AL_FLANGER_PHASE: ALenum = 2;
+pub const AL_FLANGER_RATE: ALenum = 3;
+pub const AL_FLANGER_DEPTH: ALenum = 4;
+pub const AL_FLANGER_FEEDBACK: ALenum = 5;
+pub const AL_FLANGER_DELAY: ALenum = 6;
+pub const AL_FREQUENCY_SHIFTER_FREQUENCY: ALenum = 1;
+pub const AL_FREQUENCY_SHIFTER_LEFT_DIRECTION: ALenum = 2;
+pub const AL_FREQUENCY_SHIFTER_RIGHT_DIRECTION: ALenum = 3;
+pub const AL_VOCAL_MORPHER_PHONEMEA: ALenum = 1;
+pub const AL_VOCAL_MORPHER_PHONEMEA_COARSE_TUNING: ALenum = 2;
+pub const AL_VOCAL_MORPHER_PHONEMEB: ALenum = 3;
+pub const AL_VOCAL_MORPHER_PHONEMEB_COARSE_TUNING: ALenum = 4;
+pub const AL_VOCAL_MORPHER_WAVEFORM: ALenum = 5;
+pub const AL_VOCAL_MORPHER_RATE: ALenum = 6;
+pub const AL_PITCH_SHIFTER_COARSE_TUNE: ALenum = 1;
+pub const AL_PITCH_SHIFTER_FINE_TUNE: ALenum = 2;
+pub const AL_RING_MODULATOR_FREQUENCY: ALenum = 1;
+pub const AL_RING_MODULATOR_HIGHPASS_CUTOFF: ALenum = 2;
+pub const AL_RING_MODULATOR_WAVEFORM: ALenum = 3;
+pub const AL_AUTOWAH_ATTACK_TIME: ALenum = 1;
+pub const AL_AUTOWAH_RELEASE_TIME: ALenum = 2;
+pub const AL_AUTOWAH_RESONANCE: ALenum = 3;
+pub const AL_AUTOWAH_PEAK_GAIN: ALenum = 4;
+pub const AL_COMPRESSOR_ONOFF: ALenum = 1;
+pub const AL_EQUALIZER_LOW_GAIN: ALenum = 1;
+pub const AL_EQUALIZER_LOW_CUTOFF: ALenum = 2;
+pub const AL_EQUALIZER_MID1_GAIN: ALenum = 3;
+pub const AL_EQUALIZER_MID1_CENTER: ALenum = 4;
+pub const AL_EQUALIZER_MID1_WIDTH: ALenum = 5;
+pub const AL_EQUALIZER_MID2_GAIN: ALenum = 6;
+pub const AL_EQUALIZER_MID2_CENTER: ALenum = 7;
+pub const AL_EQUALIZER_MID2_WIDTH: ALenum = 8;
+pub const AL_EQUALIZER_HIGH_GAIN: ALenum = 9;
+pub const AL_EQUALIZER_HIGH_CUTOFF: ALenum = 10;
+pub const AL_EFFECT_FIRST_PARAMETER: ALenum = 0;
+pub const AL_EFFECT_LAST_PARAMETER: ALenum = 32768;
+pub const AL_EFFECT_TYPE: ALenum = 32769;
+pub const AL_EFFECT_NULL: ALenum = 0;
+pub const AL_EFFECT_REVERB: ALenum = 1;
+pub const AL_EFFECT_CHORUS: ALenum = 2;
+pub const AL_EFFECT_DISTORTION: ALenum = 3;
+pub const AL_EFFECT_ECHO: ALenum = 4;
+pub const AL_EFFECT_FLANGER: ALenum = 5;
+pub const AL_EFFECT_FREQUENCY_SHIFTER: ALenum = 6;
+pub const AL_EFFECT_VOCAL_MORPHER: ALenum = 7;
+pub const AL_EFFECT_PITCH_SHIFTER: ALenum = 8;
+pub const AL_EFFECT_RING_MODULATOR: ALenum = 9;
+pub const AL_EFFECT_AUTOWAH: ALenum = 10;
+pub const AL_EFFECT_COMPRESSOR: ALenum = 11;
+pub const AL_EFFECT_EQUALIZER: ALenum = 12;
+pub const AL_EFFECT_EAXREVERB: ALenum = 32768;
+pub const AL_EFFECTSLOT_EFFECT: ALenum = 1;
+pub const AL_EFFECTSLOT_GAIN: ALenum = 2;
+pub const AL_EFFECTSLOT_AUXILIARY_SEND_AUTO: ALenum = 3;
+pub const AL_EFFECTSLOT_NULL: ALenum = 0;
+pub const AL_LOWPASS_GAIN: ALenum = 1;
+pub const AL_LOWPASS_GAINHF: ALenum = 2;
+pub const AL_HIGHPASS_GAIN: ALenum = 1;
+pub const AL_HIGHPASS_GAINLF: ALenum = 2;
+pub const AL_BANDPASS_GAIN: ALenum = 1;
+pub const AL_BANDPASS_GAINLF: ALenum = 2;
+pub const AL_BANDPASS_GAINHF: ALenum = 3;
+pub const AL_FILTER_FIRST_PARAMETER: ALenum = 0;
+pub const AL_FILTER_LAST_PARAMETER: ALenum = 32768;
+pub const AL_FILTER_TYPE: ALenum = 32769;
+pub const AL_FILTER_NULL: ALenum = 0;
+pub const AL_FILTER_LOWPASS: ALenum = 1;
+pub const AL_FILTER_HIGHPASS: ALenum = 2;
+pub const AL_FILTER_BANDPASS: ALenum = 3;
+
+/* Filter ranges and defaults. */
+
+/* Lowpass filter */
+pub const AL_LOWPASS_MIN_GAIN: ALfloat = 0.0;
+pub const AL_LOWPASS_MAX_GAIN: ALfloat = 1.0;
+pub const AL_LOWPASS_DEFAULT_GAIN: ALfloat = 1.0;
+
+pub const AL_LOWPASS_MIN_GAINHF: ALfloat = 0.0;
+pub const AL_LOWPASS_MAX_GAINHF: ALfloat = 1.0;
+pub const AL_LOWPASS_DEFAULT_GAINHF: ALfloat = 1.0;
+
+/* Highpass filter */
+pub const AL_HIGHPASS_MIN_GAIN: ALfloat = 0.0;
+pub const AL_HIGHPASS_MAX_GAIN: ALfloat = 1.0;
+pub const AL_HIGHPASS_DEFAULT_GAIN: ALfloat = 1.0;
+
+pub const AL_HIGHPASS_MIN_GAINLF: ALfloat = 0.0;
+pub const AL_HIGHPASS_MAX_GAINLF: ALfloat = 1.0;
+pub const AL_HIGHPASS_DEFAULT_GAINLF: ALfloat = 1.0;
+
+/* Bandpass filter */
+pub const AL_BANDPASS_MIN_GAIN: ALfloat = 0.0;
+pub const AL_BANDPASS_MAX_GAIN: ALfloat = 1.0;
+pub const AL_BANDPASS_DEFAULT_GAIN: ALfloat = 1.0;
+
+pub const AL_BANDPASS_MIN_GAINHF: ALfloat = 0.0;
+pub const AL_BANDPASS_MAX_GAINHF: ALfloat = 1.0;
+pub const AL_BANDPASS_DEFAULT_GAINHF: ALfloat = 1.0;
+
+pub const AL_BANDPASS_MIN_GAINLF: ALfloat = 0.0;
+pub const AL_BANDPASS_MAX_GAINLF: ALfloat = 1.0;
+pub const AL_BANDPASS_DEFAULT_GAINLF: ALfloat = 1.0;
+
+
+/* Effect parameter ranges and defaults. */
+
+/* Standard reverb effect */
+pub const AL_REVERB_MIN_DENSITY: ALfloat = 0.0;
+pub const AL_REVERB_MAX_DENSITY: ALfloat = 1.0;
+pub const AL_REVERB_DEFAULT_DENSITY: ALfloat = 1.0;
+
+pub const AL_REVERB_MIN_DIFFUSION: ALfloat = 0.0;
+pub const AL_REVERB_MAX_DIFFUSION: ALfloat = 1.0;
+pub const AL_REVERB_DEFAULT_DIFFUSION: ALfloat = 1.0;
+
+pub const AL_REVERB_MIN_GAIN: ALfloat = 0.0;
+pub const AL_REVERB_MAX_GAIN: ALfloat = 1.0;
+pub const AL_REVERB_DEFAULT_GAIN: ALfloat = 0.32;
+
+pub const AL_REVERB_MIN_GAINHF: ALfloat = 0.0;
+pub const AL_REVERB_MAX_GAINHF: ALfloat = 1.0;
+pub const AL_REVERB_DEFAULT_GAINHF: ALfloat = 0.89;
+
+pub const AL_REVERB_MIN_DECAY_TIME: ALfloat = 0.1;
+pub const AL_REVERB_MAX_DECAY_TIME: ALfloat = 20.0;
+pub const AL_REVERB_DEFAULT_DECAY_TIME: ALfloat = 1.49;
+
+pub const AL_REVERB_MIN_DECAY_HFRATIO: ALfloat = 0.1;
+pub const AL_REVERB_MAX_DECAY_HFRATIO: ALfloat = 2.0;
+pub const AL_REVERB_DEFAULT_DECAY_HFRATIO: ALfloat = 0.83;
+
+pub const AL_REVERB_MIN_REFLECTIONS_GAIN: ALfloat = 0.0;
+pub const AL_REVERB_MAX_REFLECTIONS_GAIN: ALfloat = 3.16;
+pub const AL_REVERB_DEFAULT_REFLECTIONS_GAIN: ALfloat = 0.05;
+
+pub const AL_REVERB_MIN_REFLECTIONS_DELAY: ALfloat = 0.0;
+pub const AL_REVERB_MAX_REFLECTIONS_DELAY: ALfloat = 0.3;
+pub const AL_REVERB_DEFAULT_REFLECTIONS_DELAY: ALfloat = 0.007;
+
+pub const AL_REVERB_MIN_LATE_REVERB_GAIN: ALfloat = 0.0;
+pub const AL_REVERB_MAX_LATE_REVERB_GAIN: ALfloat = 10.0;
+pub const AL_REVERB_DEFAULT_LATE_REVERB_GAIN: ALfloat = 1.26;
+
+pub const AL_REVERB_MIN_LATE_REVERB_DELAY: ALfloat = 0.0;
+pub const AL_REVERB_MAX_LATE_REVERB_DELAY: ALfloat = 0.1;
+pub const AL_REVERB_DEFAULT_LATE_REVERB_DELAY: ALfloat = 0.011;
+
+pub const AL_REVERB_MIN_AIR_ABSORPTION_GAINHF: ALfloat = 0.892;
+pub const AL_REVERB_MAX_AIR_ABSORPTION_GAINHF: ALfloat = 1.0;
+pub const AL_REVERB_DEFAULT_AIR_ABSORPTION_GAINHF: ALfloat = 0.994;
+
+pub const AL_REVERB_MIN_ROOM_ROLLOFF_FACTOR: ALfloat = 0.0;
+pub const AL_REVERB_MAX_ROOM_ROLLOFF_FACTOR: ALfloat = 10.0;
+pub const AL_REVERB_DEFAULT_ROOM_ROLLOFF_FACTOR: ALfloat = 0.0;
+
+pub const AL_REVERB_MIN_DECAY_HFLIMIT: ALboolean = AL_FALSE;
+pub const AL_REVERB_MAX_DECAY_HFLIMIT: ALboolean = AL_TRUE;
+pub const AL_REVERB_DEFAULT_DECAY_HFLIMIT: ALboolean = AL_TRUE;
+
+/* EAX reverb effect */
+pub const AL_EAXREVERB_MIN_DENSITY: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_DENSITY: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_DENSITY: ALfloat = 1.0;
+
+pub const AL_EAXREVERB_MIN_DIFFUSION: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_DIFFUSION: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_DIFFUSION: ALfloat = 1.0;
+
+pub const AL_EAXREVERB_MIN_GAIN: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_GAIN: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_GAIN: ALfloat = 0.32;
+
+pub const AL_EAXREVERB_MIN_GAINHF: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_GAINHF: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_GAINHF: ALfloat = 0.89;
+
+pub const AL_EAXREVERB_MIN_GAINLF: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_GAINLF: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_GAINLF: ALfloat = 1.0;
+
+pub const AL_EAXREVERB_MIN_DECAY_TIME: ALfloat = 0.1;
+pub const AL_EAXREVERB_MAX_DECAY_TIME: ALfloat = 20.0;
+pub const AL_EAXREVERB_DEFAULT_DECAY_TIME: ALfloat = 1.49;
+
+pub const AL_EAXREVERB_MIN_DECAY_HFRATIO: ALfloat = 0.1;
+pub const AL_EAXREVERB_MAX_DECAY_HFRATIO: ALfloat = 2.0;
+pub const AL_EAXREVERB_DEFAULT_DECAY_HFRATIO: ALfloat = 0.83;
+
+pub const AL_EAXREVERB_MIN_DECAY_LFRATIO: ALfloat = 0.1;
+pub const AL_EAXREVERB_MAX_DECAY_LFRATIO: ALfloat = 2.0;
+pub const AL_EAXREVERB_DEFAULT_DECAY_LFRATIO: ALfloat = 1.0;
+
+pub const AL_EAXREVERB_MIN_REFLECTIONS_GAIN: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_REFLECTIONS_GAIN: ALfloat = 3.16;
+pub const AL_EAXREVERB_DEFAULT_REFLECTIONS_GAIN: ALfloat = 0.05;
+
+pub const AL_EAXREVERB_MIN_REFLECTIONS_DELAY: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_REFLECTIONS_DELAY: ALfloat = 0.3;
+pub const AL_EAXREVERB_DEFAULT_REFLECTIONS_DELAY: ALfloat = 0.007;
+
+pub const AL_EAXREVERB_DEFAULT_REFLECTIONS_PAN_XYZ: ALfloat = 0.0;
+
+pub const AL_EAXREVERB_MIN_LATE_REVERB_GAIN: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_LATE_REVERB_GAIN: ALfloat = 10.0;
+pub const AL_EAXREVERB_DEFAULT_LATE_REVERB_GAIN: ALfloat = 1.26;
+
+pub const AL_EAXREVERB_MIN_LATE_REVERB_DELAY: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_LATE_REVERB_DELAY: ALfloat = 0.1;
+pub const AL_EAXREVERB_DEFAULT_LATE_REVERB_DELAY: ALfloat = 0.011;
+
+pub const AL_EAXREVERB_DEFAULT_LATE_REVERB_PAN_XYZ: ALfloat = 0.0;
+
+pub const AL_EAXREVERB_MIN_ECHO_TIME: ALfloat = 0.075;
+pub const AL_EAXREVERB_MAX_ECHO_TIME: ALfloat = 0.25;
+pub const AL_EAXREVERB_DEFAULT_ECHO_TIME: ALfloat = 0.25;
+
+pub const AL_EAXREVERB_MIN_ECHO_DEPTH: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_ECHO_DEPTH: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_ECHO_DEPTH: ALfloat = 0.0;
+
+pub const AL_EAXREVERB_MIN_MODULATION_TIME: ALfloat = 0.04;
+pub const AL_EAXREVERB_MAX_MODULATION_TIME: ALfloat = 4.0;
+pub const AL_EAXREVERB_DEFAULT_MODULATION_TIME: ALfloat = 0.25;
+
+pub const AL_EAXREVERB_MIN_MODULATION_DEPTH: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_MODULATION_DEPTH: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_MODULATION_DEPTH: ALfloat = 0.0;
+
+pub const AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF: ALfloat = 0.892;
+pub const AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF: ALfloat = 1.0;
+pub const AL_EAXREVERB_DEFAULT_AIR_ABSORPTION_GAINHF: ALfloat = 0.994;
+
+pub const AL_EAXREVERB_MIN_HFREFERENCE: ALfloat = 1000.0;
+pub const AL_EAXREVERB_MAX_HFREFERENCE: ALfloat = 20000.0;
+pub const AL_EAXREVERB_DEFAULT_HFREFERENCE: ALfloat = 5000.0;
+
+pub const AL_EAXREVERB_MIN_LFREFERENCE: ALfloat = 20.0;
+pub const AL_EAXREVERB_MAX_LFREFERENCE: ALfloat = 1000.0;
+pub const AL_EAXREVERB_DEFAULT_LFREFERENCE: ALfloat = 250.0;
+
+pub const AL_EAXREVERB_MIN_ROOM_ROLLOFF_FACTOR: ALfloat = 0.0;
+pub const AL_EAXREVERB_MAX_ROOM_ROLLOFF_FACTOR: ALfloat = 10.0;
+pub const AL_EAXREVERB_DEFAULT_ROOM_ROLLOFF_FACTOR: ALfloat = 0.0;
+
+pub const AL_EAXREVERB_MIN_DECAY_HFLIMIT: ALboolean = AL_FALSE;
+pub const AL_EAXREVERB_MAX_DECAY_HFLIMIT: ALboolean = AL_TRUE;
+pub const AL_EAXREVERB_DEFAULT_DECAY_HFLIMIT: ALboolean = AL_TRUE;
+
+/* Chorus effect */
+pub const AL_CHORUS_WAVEFORM_SINUSOID: ALint = 0;
+pub const AL_CHORUS_WAVEFORM_TRIANGLE: ALint = 1;
+
+pub const AL_CHORUS_MIN_WAVEFORM: ALint = 0;
+pub const AL_CHORUS_MAX_WAVEFORM: ALint = 1;
+pub const AL_CHORUS_DEFAULT_WAVEFORM: ALint = 1;
+
+pub const AL_CHORUS_MIN_PHASE: ALint = -180;
+pub const AL_CHORUS_MAX_PHASE: ALint = 180;
+pub const AL_CHORUS_DEFAULT_PHASE: ALint = 90;
+
+pub const AL_CHORUS_MIN_RATE: ALfloat = 0.0;
+pub const AL_CHORUS_MAX_RATE: ALfloat = 10.0;
+pub const AL_CHORUS_DEFAULT_RATE: ALfloat = 1.1;
+
+pub const AL_CHORUS_MIN_DEPTH: ALfloat = 0.0;
+pub const AL_CHORUS_MAX_DEPTH: ALfloat = 1.0;
+pub const AL_CHORUS_DEFAULT_DEPTH: ALfloat = 0.1;
+
+pub const AL_CHORUS_MIN_FEEDBACK: ALfloat = -1.0;
+pub const AL_CHORUS_MAX_FEEDBACK: ALfloat = 1.0;
+pub const AL_CHORUS_DEFAULT_FEEDBACK: ALfloat = 0.25;
+
+pub const AL_CHORUS_MIN_DELAY: ALfloat = 0.0;
+pub const AL_CHORUS_MAX_DELAY: ALfloat = 0.016;
+pub const AL_CHORUS_DEFAULT_DELAY: ALfloat = 0.016;
+
+/* Distortion effect */
+pub const AL_DISTORTION_MIN_EDGE: ALfloat = 0.0;
+pub const AL_DISTORTION_MAX_EDGE: ALfloat = 1.0;
+pub const AL_DISTORTION_DEFAULT_EDGE: ALfloat = 0.2;
+
+pub const AL_DISTORTION_MIN_GAIN: ALfloat = 0.01;
+pub const AL_DISTORTION_MAX_GAIN: ALfloat = 1.0;
+pub const AL_DISTORTION_DEFAULT_GAIN: ALfloat = 0.05;
+
+pub const AL_DISTORTION_MIN_LOWPASS_CUTOFF: ALfloat = 80.0;
+pub const AL_DISTORTION_MAX_LOWPASS_CUTOFF: ALfloat = 24000.0;
+pub const AL_DISTORTION_DEFAULT_LOWPASS_CUTOFF: ALfloat = 8000.0;
+
+pub const AL_DISTORTION_MIN_EQCENTER: ALfloat = 80.0;
+pub const AL_DISTORTION_MAX_EQCENTER: ALfloat = 24000.0;
+pub const AL_DISTORTION_DEFAULT_EQCENTER: ALfloat = 3600.0;
+
+pub const AL_DISTORTION_MIN_EQBANDWIDTH: ALfloat = 80.0;
+pub const AL_DISTORTION_MAX_EQBANDWIDTH: ALfloat = 24000.0;
+pub const AL_DISTORTION_DEFAULT_EQBANDWIDTH: ALfloat = 3600.0;
+
+/* Echo effect */
+pub const AL_ECHO_MIN_DELAY: ALfloat = 0.0;
+pub const AL_ECHO_MAX_DELAY: ALfloat = 0.207;
+pub const AL_ECHO_DEFAULT_DELAY: ALfloat = 0.1;
+
+pub const AL_ECHO_MIN_LRDELAY: ALfloat = 0.0;
+pub const AL_ECHO_MAX_LRDELAY: ALfloat = 0.404;
+pub const AL_ECHO_DEFAULT_LRDELAY: ALfloat = 0.1;
+
+pub const AL_ECHO_MIN_DAMPING: ALfloat = 0.0;
+pub const AL_ECHO_MAX_DAMPING: ALfloat = 0.99;
+pub const AL_ECHO_DEFAULT_DAMPING: ALfloat = 0.5;
+
+pub const AL_ECHO_MIN_FEEDBACK: ALfloat = 0.0;
+pub const AL_ECHO_MAX_FEEDBACK: ALfloat = 1.0;
+pub const AL_ECHO_DEFAULT_FEEDBACK: ALfloat = 0.5;
+
+pub const AL_ECHO_MIN_SPREAD: ALfloat = -1.0;
+pub const AL_ECHO_MAX_SPREAD: ALfloat = 1.0;
+pub const AL_ECHO_DEFAULT_SPREAD: ALfloat = -1.0;
+
+/* Flanger effect */
+pub const AL_FLANGER_WAVEFORM_SINUSOID: ALint = 0;
+pub const AL_FLANGER_WAVEFORM_TRIANGLE: ALint = 1;
+
+pub const AL_FLANGER_MIN_WAVEFORM: ALint = 0;
+pub const AL_FLANGER_MAX_WAVEFORM: ALint = 1;
+pub const AL_FLANGER_DEFAULT_WAVEFORM: ALint = 1;
+
+pub const AL_FLANGER_MIN_PHASE: ALint = -180;
+pub const AL_FLANGER_MAX_PHASE: ALint = 180;
+pub const AL_FLANGER_DEFAULT_PHASE: ALint = 0;
+
+pub const AL_FLANGER_MIN_RATE: ALfloat = 0.0;
+pub const AL_FLANGER_MAX_RATE: ALfloat = 10.0;
+pub const AL_FLANGER_DEFAULT_RATE: ALfloat = 0.27;
+
+pub const AL_FLANGER_MIN_DEPTH: ALfloat = 0.0;
+pub const AL_FLANGER_MAX_DEPTH: ALfloat = 1.0;
+pub const AL_FLANGER_DEFAULT_DEPTH: ALfloat = 1.0;
+
+pub const AL_FLANGER_MIN_FEEDBACK: ALfloat = -1.0;
+pub const AL_FLANGER_MAX_FEEDBACK: ALfloat = 1.0;
+pub const AL_FLANGER_DEFAULT_FEEDBACK: ALfloat = -0.5;
+
+pub const AL_FLANGER_MIN_DELAY: ALfloat = 0.0;
+pub const AL_FLANGER_MAX_DELAY: ALfloat = 0.004;
+pub const AL_FLANGER_DEFAULT_DELAY: ALfloat = 0.002;
+
+/* Frequency shifter effect */
+pub const AL_FREQUENCY_SHIFTER_MIN_FREQUENCY: ALfloat = 0.0;
+pub const AL_FREQUENCY_SHIFTER_MAX_FREQUENCY: ALfloat = 24000.0;
+pub const AL_FREQUENCY_SHIFTER_DEFAULT_FREQUENCY: ALfloat = 0.0;
+
+pub const AL_FREQUENCY_SHIFTER_MIN_LEFT_DIRECTION: ALint = 0;
+pub const AL_FREQUENCY_SHIFTER_MAX_LEFT_DIRECTION: ALint = 2;
+pub const AL_FREQUENCY_SHIFTER_DEFAULT_LEFT_DIRECTION: ALint = 0;
+
+pub const AL_FREQUENCY_SHIFTER_DIRECTION_DOWN: ALint = 0;
+pub const AL_FREQUENCY_SHIFTER_DIRECTION_UP: ALint = 1;
+pub const AL_FREQUENCY_SHIFTER_DIRECTION_OFF: ALint = 2;
+
+pub const AL_FREQUENCY_SHIFTER_MIN_RIGHT_DIRECTION: ALint = 0;
+pub const AL_FREQUENCY_SHIFTER_MAX_RIGHT_DIRECTION: ALint = 2;
+pub const AL_FREQUENCY_SHIFTER_DEFAULT_RIGHT_DIRECTION: ALint = 0;
+
+/* Vocal morpher effect */
+pub const AL_VOCAL_MORPHER_MIN_PHONEMEA: ALint = 0;
+pub const AL_VOCAL_MORPHER_MAX_PHONEMEA: ALint = 29;
+pub const AL_VOCAL_MORPHER_DEFAULT_PHONEMEA: ALint = 0;
+
+pub const AL_VOCAL_MORPHER_MIN_PHONEMEA_COARSE_TUNING: ALint = -24;
+pub const AL_VOCAL_MORPHER_MAX_PHONEMEA_COARSE_TUNING: ALint = 24;
+pub const AL_VOCAL_MORPHER_DEFAULT_PHONEMEA_COARSE_TUNING: ALint = 0;
+
+pub const AL_VOCAL_MORPHER_MIN_PHONEMEB: ALint = 0;
+pub const AL_VOCAL_MORPHER_MAX_PHONEMEB: ALint = 29;
+pub const AL_VOCAL_MORPHER_DEFAULT_PHONEMEB: ALint = 10;
+
+pub const AL_VOCAL_MORPHER_MIN_PHONEMEB_COARSE_TUNING: ALint = -24;
+pub const AL_VOCAL_MORPHER_MAX_PHONEMEB_COARSE_TUNING: ALint = 24;
+pub const AL_VOCAL_MORPHER_DEFAULT_PHONEMEB_COARSE_TUNING: ALint = 0;
+
+pub const AL_VOCAL_MORPHER_PHONEME_A: ALint = 0;
+pub const AL_VOCAL_MORPHER_PHONEME_E: ALint = 1;
+pub const AL_VOCAL_MORPHER_PHONEME_I: ALint = 2;
+pub const AL_VOCAL_MORPHER_PHONEME_O: ALint = 3;
+pub const AL_VOCAL_MORPHER_PHONEME_U: ALint = 4;
+pub const AL_VOCAL_MORPHER_PHONEME_AA: ALint = 5;
+pub const AL_VOCAL_MORPHER_PHONEME_AE: ALint = 6;
+pub const AL_VOCAL_MORPHER_PHONEME_AH: ALint = 7;
+pub const AL_VOCAL_MORPHER_PHONEME_AO: ALint = 8;
+pub const AL_VOCAL_MORPHER_PHONEME_EH: ALint = 9;
+pub const AL_VOCAL_MORPHER_PHONEME_ER: ALint = 10;
+pub const AL_VOCAL_MORPHER_PHONEME_IH: ALint = 11;
+pub const AL_VOCAL_MORPHER_PHONEME_IY: ALint = 12;
+pub const AL_VOCAL_MORPHER_PHONEME_UH: ALint = 13;
+pub const AL_VOCAL_MORPHER_PHONEME_UW: ALint = 14;
+pub const AL_VOCAL_MORPHER_PHONEME_B: ALint = 15;
+pub const AL_VOCAL_MORPHER_PHONEME_D: ALint = 16;
+pub const AL_VOCAL_MORPHER_PHONEME_F: ALint = 17;
+pub const AL_VOCAL_MORPHER_PHONEME_G: ALint = 18;
+pub const AL_VOCAL_MORPHER_PHONEME_J: ALint = 19;
+pub const AL_VOCAL_MORPHER_PHONEME_K: ALint = 20;
+pub const AL_VOCAL_MORPHER_PHONEME_L: ALint = 21;
+pub const AL_VOCAL_MORPHER_PHONEME_M: ALint = 22;
+pub const AL_VOCAL_MORPHER_PHONEME_N: ALint = 23;
+pub const AL_VOCAL_MORPHER_PHONEME_P: ALint = 24;
+pub const AL_VOCAL_MORPHER_PHONEME_R: ALint = 25;
+pub const AL_VOCAL_MORPHER_PHONEME_S: ALint = 26;
+pub const AL_VOCAL_MORPHER_PHONEME_T: ALint = 27;
+pub const AL_VOCAL_MORPHER_PHONEME_V: ALint = 28;
+pub const AL_VOCAL_MORPHER_PHONEME_Z: ALint = 29;
+
+pub const AL_VOCAL_MORPHER_WAVEFORM_SINUSOID: ALint = 0;
+pub const AL_VOCAL_MORPHER_WAVEFORM_TRIANGLE: ALint = 1;
+pub const AL_VOCAL_MORPHER_WAVEFORM_SAWTOOTH: ALint = 2;
+
+pub const AL_VOCAL_MORPHER_MIN_WAVEFORM: ALint = 0;
+pub const AL_VOCAL_MORPHER_MAX_WAVEFORM: ALint = 2;
+pub const AL_VOCAL_MORPHER_DEFAULT_WAVEFORM: ALint = 0;
+
+pub const AL_VOCAL_MORPHER_MIN_RATE: ALfloat = 0.0;
+pub const AL_VOCAL_MORPHER_MAX_RATE: ALfloat = 10.0;
+pub const AL_VOCAL_MORPHER_DEFAULT_RATE: ALfloat = 1.41;
+
+/* Pitch shifter effect */
+pub const AL_PITCH_SHIFTER_MIN_COARSE_TUNE: ALint = -12;
+pub const AL_PITCH_SHIFTER_MAX_COARSE_TUNE: ALint = 12;
+pub const AL_PITCH_SHIFTER_DEFAULT_COARSE_TUNE: ALint = 12;
+
+pub const AL_PITCH_SHIFTER_MIN_FINE_TUNE: ALint = -50;
+pub const AL_PITCH_SHIFTER_MAX_FINE_TUNE: ALint = 50;
+pub const AL_PITCH_SHIFTER_DEFAULT_FINE_TUNE: ALint = 0;
+
+/* Ring modulator effect */
+pub const AL_RING_MODULATOR_MIN_FREQUENCY: ALfloat = 0.0;
+pub const AL_RING_MODULATOR_MAX_FREQUENCY: ALfloat = 8000.0;
+pub const AL_RING_MODULATOR_DEFAULT_FREQUENCY: ALfloat = 440.0;
+
+pub const AL_RING_MODULATOR_MIN_HIGHPASS_CUTOFF: ALfloat = 0.0;
+pub const AL_RING_MODULATOR_MAX_HIGHPASS_CUTOFF: ALfloat = 24000.0;
+pub const AL_RING_MODULATOR_DEFAULT_HIGHPASS_CUTOFF: ALfloat = 800.0;
+
+pub const AL_RING_MODULATOR_SINUSOID: ALint = 0;
+pub const AL_RING_MODULATOR_SAWTOOTH: ALint = 1;
+pub const AL_RING_MODULATOR_SQUARE: ALint = 2;
+
+pub const AL_RING_MODULATOR_MIN_WAVEFORM: ALint = 0;
+pub const AL_RING_MODULATOR_MAX_WAVEFORM: ALint = 2;
+pub const AL_RING_MODULATOR_DEFAULT_WAVEFORM: ALint = 0;
+
+/* Autowah effect */
+pub const AL_AUTOWAH_MIN_ATTACK_TIME: ALfloat = 0.0001;
+pub const AL_AUTOWAH_MAX_ATTACK_TIME: ALfloat = 1.0;
+pub const AL_AUTOWAH_DEFAULT_ATTACK_TIME: ALfloat = 0.06;
+
+pub const AL_AUTOWAH_MIN_RELEASE_TIME: ALfloat = 0.0001;
+pub const AL_AUTOWAH_MAX_RELEASE_TIME: ALfloat = 1.0;
+pub const AL_AUTOWAH_DEFAULT_RELEASE_TIME: ALfloat = 0.06;
+
+pub const AL_AUTOWAH_MIN_RESONANCE: ALfloat = 2.0;
+pub const AL_AUTOWAH_MAX_RESONANCE: ALfloat = 1000.0;
+pub const AL_AUTOWAH_DEFAULT_RESONANCE: ALfloat = 1000.0;
+
+pub const AL_AUTOWAH_MIN_PEAK_GAIN: ALfloat = 0.00003;
+pub const AL_AUTOWAH_MAX_PEAK_GAIN: ALfloat = 31621.0;
+pub const AL_AUTOWAH_DEFAULT_PEAK_GAIN: ALfloat = 11.22;
+
+/* Compressor effect */
+pub const AL_COMPRESSOR_MIN_ONOFF: ALint = 0;
+pub const AL_COMPRESSOR_MAX_ONOFF: ALint = 1;
+pub const AL_COMPRESSOR_DEFAULT_ONOFF: ALint = 1;
+
+/* Equalizer effect */
+pub const AL_EQUALIZER_MIN_LOW_GAIN: ALfloat = 0.126;
+pub const AL_EQUALIZER_MAX_LOW_GAIN: ALfloat = 7.943;
+pub const AL_EQUALIZER_DEFAULT_LOW_GAIN: ALfloat = 1.0;
+
+pub const AL_EQUALIZER_MIN_LOW_CUTOFF: ALfloat = 50.0;
+pub const AL_EQUALIZER_MAX_LOW_CUTOFF: ALfloat = 800.0;
+pub const AL_EQUALIZER_DEFAULT_LOW_CUTOFF: ALfloat = 200.0;
+
+pub const AL_EQUALIZER_MIN_MID1_GAIN: ALfloat = 0.126;
+pub const AL_EQUALIZER_MAX_MID1_GAIN: ALfloat = 7.943;
+pub const AL_EQUALIZER_DEFAULT_MID1_GAIN: ALfloat = 1.0;
+
+pub const AL_EQUALIZER_MIN_MID1_CENTER: ALfloat = 200.0;
+pub const AL_EQUALIZER_MAX_MID1_CENTER: ALfloat = 3000.0;
+pub const AL_EQUALIZER_DEFAULT_MID1_CENTER: ALfloat = 500.0;
+
+pub const AL_EQUALIZER_MIN_MID1_WIDTH: ALfloat = 0.01;
+pub const AL_EQUALIZER_MAX_MID1_WIDTH: ALfloat = 1.0;
+pub const AL_EQUALIZER_DEFAULT_MID1_WIDTH: ALfloat = 1.0;
+
+pub const AL_EQUALIZER_MIN_MID2_GAIN: ALfloat = 0.126;
+pub const AL_EQUALIZER_MAX_MID2_GAIN: ALfloat = 7.943;
+pub const AL_EQUALIZER_DEFAULT_MID2_GAIN: ALfloat = 1.0;
+
+pub const AL_EQUALIZER_MIN_MID2_CENTER: ALfloat = 1000.0;
+pub const AL_EQUALIZER_MAX_MID2_CENTER: ALfloat = 8000.0;
+pub const AL_EQUALIZER_DEFAULT_MID2_CENTER: ALfloat = 3000.0;
+
+pub const AL_EQUALIZER_MIN_MID2_WIDTH: ALfloat = 0.01;
+pub const AL_EQUALIZER_MAX_MID2_WIDTH: ALfloat = 1.0;
+pub const AL_EQUALIZER_DEFAULT_MID2_WIDTH: ALfloat = 1.0;
+
+pub const AL_EQUALIZER_MIN_HIGH_GAIN: ALfloat = 0.126;
+pub const AL_EQUALIZER_MAX_HIGH_GAIN: ALfloat = 7.943;
+pub const AL_EQUALIZER_DEFAULT_HIGH_GAIN: ALfloat = 1.0;
+
+pub const AL_EQUALIZER_MIN_HIGH_CUTOFF: ALfloat = 4000.0;
+pub const AL_EQUALIZER_MAX_HIGH_CUTOFF: ALfloat = 16000.0;
+pub const AL_EQUALIZER_DEFAULT_HIGH_CUTOFF: ALfloat = 6000.0;
+
+
+/* Source parameter value ranges and defaults. */
+pub const AL_MIN_AIR_ABSORPTION_FACTOR: ALfloat = 0.0;
+pub const AL_MAX_AIR_ABSORPTION_FACTOR: ALfloat = 10.0;
+pub const AL_DEFAULT_AIR_ABSORPTION_FACTOR: ALfloat = 0.0;
+
+pub const AL_MIN_ROOM_ROLLOFF_FACTOR: ALfloat = 0.0;
+pub const AL_MAX_ROOM_ROLLOFF_FACTOR: ALfloat = 10.0;
+pub const AL_DEFAULT_ROOM_ROLLOFF_FACTOR: ALfloat = 0.0;
+
+pub const AL_MIN_CONE_OUTER_GAINHF: ALfloat = 0.0;
+pub const AL_MAX_CONE_OUTER_GAINHF: ALfloat = 1.0;
+pub const AL_DEFAULT_CONE_OUTER_GAINHF: ALfloat = 1.0;
+
+pub const AL_MIN_DIRECT_FILTER_GAINHF_AUTO: ALboolean = AL_FALSE;
+pub const AL_MAX_DIRECT_FILTER_GAINHF_AUTO: ALboolean = AL_TRUE;
+pub const AL_DEFAULT_DIRECT_FILTER_GAINHF_AUTO: ALboolean = AL_TRUE;
+
+pub const AL_MIN_AUXILIARY_SEND_FILTER_GAIN_AUTO: ALboolean = AL_FALSE;
+pub const AL_MAX_AUXILIARY_SEND_FILTER_GAIN_AUTO: ALboolean = AL_TRUE;
+pub const AL_DEFAULT_AUXILIARY_SEND_FILTER_GAIN_AUTO: ALboolean = AL_TRUE;
+
+pub const AL_MIN_AUXILIARY_SEND_FILTER_GAINHF_AUTO: ALboolean = AL_FALSE;
+pub const AL_MAX_AUXILIARY_SEND_FILTER_GAINHF_AUTO: ALboolean = AL_TRUE;
+pub const AL_DEFAULT_AUXILIARY_SEND_FILTER_GAINHF_AUTO: ALboolean = AL_TRUE;
+
+
+/* Listener parameter value ranges and defaults. */
+pub const AL_MIN_METERS_PER_UNIT: ALfloat = ::std::f32::MIN;
+pub const AL_MAX_METERS_PER_UNIT: ALfloat = ::std::f32::MAX;
+pub const AL_DEFAULT_METERS_PER_UNIT: ALfloat = 1.0;

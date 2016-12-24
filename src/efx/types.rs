@@ -1,0 +1,37 @@
+use ::types::*;
+
+pub type LPEFXEAXREVERBPROPERTIES = *mut super::EFXEAXREVERBPROPERTIES;
+
+pub type LPALGENEFFECTS = ::std::option::Option<unsafe extern "C" fn(arg1: ALsizei, arg2: *mut ALuint)>;
+pub type LPALDELETEEFFECTS = ::std::option::Option<unsafe extern "C" fn(arg1: ALsizei, arg2: *const ALuint)>;
+pub type LPALISEFFECT = ::std::option::Option<extern "C" fn(arg1: ALuint) -> ALboolean>;
+pub type LPALEFFECTI = ::std::option::Option<extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: ALint)>;
+pub type LPALEFFECTIV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *const ALint)>;
+pub type LPALEFFECTF = ::std::option::Option<extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: ALfloat)>;
+pub type LPALEFFECTFV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *const ALfloat)>;
+pub type LPALGETEFFECTI = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALint)>;
+pub type LPALGETEFFECTIV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALint)>;
+pub type LPALGETEFFECTF = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALfloat)>;
+pub type LPALGETEFFECTFV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALfloat)>;
+pub type LPALGENFILTERS = ::std::option::Option<unsafe extern "C" fn(arg1: ALsizei, arg2: *mut ALuint)>;
+pub type LPALDELETEFILTERS = ::std::option::Option<unsafe extern "C" fn(arg1: ALsizei, arg2: *const ALuint)>;
+pub type LPALISFILTER = ::std::option::Option<extern "C" fn(arg1: ALuint) -> ALboolean>;
+pub type LPALFILTERI = ::std::option::Option<extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: ALint)>;
+pub type LPALFILTERIV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *const ALint)>;
+pub type LPALFILTERF = ::std::option::Option<extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: ALfloat)>;
+pub type LPALFILTERFV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *const ALfloat)>;
+pub type LPALGETFILTERI = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALint)>;
+pub type LPALGETFILTERIV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALint)>;
+pub type LPALGETFILTERF = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALfloat)>;
+pub type LPALGETFILTERFV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALfloat)>;
+pub type LPALGENAUXILIARYEFFECTSLOTS = ::std::option::Option<unsafe extern "C" fn(arg1: ALsizei, arg2: *mut ALuint)>;
+pub type LPALDELETEAUXILIARYEFFECTSLOTS = ::std::option::Option<unsafe extern "C" fn(arg1: ALsizei, arg2: *const ALuint)>;
+pub type LPALISAUXILIARYEFFECTSLOT = ::std::option::Option<extern "C" fn(arg1: ALuint) -> ALboolean>;
+pub type LPALAUXILIARYEFFECTSLOTI = ::std::option::Option<extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: ALint)>;
+pub type LPALAUXILIARYEFFECTSLOTIV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *const ALint)>;
+pub type LPALAUXILIARYEFFECTSLOTF = ::std::option::Option<extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: ALfloat)>;
+pub type LPALAUXILIARYEFFECTSLOTFV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *const ALfloat)>;
+pub type LPALGETAUXILIARYEFFECTSLOTI = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALint)>;
+pub type LPALGETAUXILIARYEFFECTSLOTIV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALint)>;
+pub type LPALGETAUXILIARYEFFECTSLOTF = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALfloat)>;
+pub type LPALGETAUXILIARYEFFECTSLOTFV = ::std::option::Option<unsafe extern "C" fn(arg1: ALuint, arg2: ALenum, arg3: *mut ALfloat)>;

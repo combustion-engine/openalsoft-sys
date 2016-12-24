@@ -1,6 +1,14 @@
 extern crate cmake;
 
+use std::env;
+
+const WIN32_LIBS: &'static [&'static str] = &[
+    "ole32", "user32", "dsound", "winmm",
+];
+
 fn main() {
+    let target = env::var("TARGET").unwrap();
+
     let mut config = cmake::Config::new(".");
 
     #[cfg(feature = "static")]
@@ -30,4 +38,10 @@ fn main() {
 
     #[cfg(not(feature = "static"))]
     println!("cargo:rustc-link-lib=static=common");
+
+    if target.contains("windows") {
+        for lib in WIN32_LIBS {
+            println!("cargo:rustc-link-lib=dylib={}", lib);
+        }
+    }
 }
