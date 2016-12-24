@@ -1,13 +1,13 @@
 //! OpenALSoft Extensions
 
-use types::*;
+use ::types::*;
 
-pub mod types;
-pub mod consts;
+pub mod ext_types;
+pub mod ext_consts;
 
 pub const AL_EXT_FOLDBACK_NAME: &'static str = "AL_EXT_FOLDBACK";
 
-pub use self::types::*;
+pub use self::ext_types::*;
 
 extern "C" {
     pub fn alBufferDataStatic(buffer: ALint, format: ALenum, data: *mut ALvoid, len: ALsizei, freq: ALsizei) -> ALvoid;

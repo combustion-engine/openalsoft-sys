@@ -22,8 +22,8 @@ pub mod all {
     pub use super::ext::*;
 
     pub use super::consts::*;
-    pub use super::efx::consts::*;
-    pub use super::ext::consts::*;
+    pub use super::efx::efx_consts::*;
+    pub use super::ext::ext_consts::*;
 }
 
 #[cfg_attr(all(feature = "static", target_os = "linux"), link(name = "openal", kind = "static"))]

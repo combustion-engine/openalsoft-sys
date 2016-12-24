@@ -2,12 +2,12 @@
 
 use ::types::*;
 
-pub mod types;
+pub mod efx_types;
 #[cfg(feature = "presets")]
 pub mod presets;
-pub mod consts;
+pub mod efx_consts;
 
-pub use self::types::*;
+pub use self::efx_types::*;
 
 pub const ALC_EXT_EFX_NAME: &'static str = "ALC_EXT_EFX";
 
