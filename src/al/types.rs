@@ -1,5 +1,3 @@
-//! OpenAL type definitions
-
 pub type ALboolean = ::std::os::raw::c_char;
 pub type ALchar = ::std::os::raw::c_char;
 pub type ALbyte = ::std::os::raw::c_char;
@@ -13,20 +11,6 @@ pub type ALenum = ::std::os::raw::c_int;
 pub type ALfloat = f32;
 pub type ALdouble = f64;
 pub type ALvoid = ::std::os::raw::c_void;
-
-pub type ALCboolean = ::std::os::raw::c_char;
-pub type ALCchar = ::std::os::raw::c_char;
-pub type ALCbyte = ::std::os::raw::c_char;
-pub type ALCubyte = ::std::os::raw::c_uchar;
-pub type ALCshort = ::std::os::raw::c_short;
-pub type ALCushort = ::std::os::raw::c_ushort;
-pub type ALCint = ::std::os::raw::c_int;
-pub type ALCuint = ::std::os::raw::c_uint;
-pub type ALCsizei = ::std::os::raw::c_int;
-pub type ALCenum = ::std::os::raw::c_int;
-pub type ALCfloat = f32;
-pub type ALCdouble = f64;
-pub type ALCvoid = ::std::os::raw::c_void;
 
 pub type LPALENABLE = ::std::option::Option<extern "C" fn(capability: ALenum)>;
 pub type LPALDISABLE = ::std::option::Option<extern "C" fn(capability: ALenum)>;
@@ -101,27 +85,3 @@ pub type LPALDOPPLERFACTOR = ::std::option::Option<extern "C" fn(value: ALfloat)
 pub type LPALDOPPLERVELOCITY = ::std::option::Option<extern "C" fn(value: ALfloat)>;
 pub type LPALSPEEDOFSOUND = ::std::option::Option<extern "C" fn(value: ALfloat)>;
 pub type LPALDISTANCEMODEL = ::std::option::Option<extern "C" fn(distanceModel: ALenum)>;
-
-pub type ALCdevice = ::ALCdevice_struct;
-pub type ALCcontext = ::ALCcontext_struct;
-
-pub type LPALCCREATECONTEXT = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, attrlist: *const ALCint) -> *mut ALCcontext>;
-pub type LPALCMAKECONTEXTCURRENT = ::std::option::Option<unsafe extern "C" fn(context: *mut ALCcontext) -> ALCboolean>;
-pub type LPALCPROCESSCONTEXT = ::std::option::Option<unsafe extern "C" fn(context: *mut ALCcontext)>;
-pub type LPALCSUSPENDCONTEXT = ::std::option::Option<unsafe extern "C" fn(context: *mut ALCcontext)>;
-pub type LPALCDESTROYCONTEXT = ::std::option::Option<unsafe extern "C" fn(context: *mut ALCcontext)>;
-pub type LPALCGETCURRENTCONTEXT = ::std::option::Option<extern "C" fn() -> *mut ALCcontext>;
-pub type LPALCGETCONTEXTSDEVICE = ::std::option::Option<unsafe extern "C" fn(context: *mut ALCcontext) -> *mut ALCdevice>;
-pub type LPALCOPENDEVICE = ::std::option::Option<unsafe extern "C" fn(devicename: *const ALCchar) -> *mut ALCdevice>;
-pub type LPALCCLOSEDEVICE = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice) -> ALCboolean>;
-pub type LPALCGETERROR = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice) -> ALCenum>;
-pub type LPALCISEXTENSIONPRESENT = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, extname: *const ALCchar) -> ALCboolean>;
-pub type LPALCGETPROCADDRESS = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, funcname: *const ALCchar) -> *mut ::std::os::raw::c_void>;
-pub type LPALCGETENUMVALUE = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, enumname: *const ALCchar) -> ALCenum>;
-pub type LPALCGETSTRING = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, param: ALCenum) -> *const ALCchar>;
-pub type LPALCGETINTEGERV = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, param: ALCenum, size: ALCsizei, values: *mut ALCint)>;
-pub type LPALCCAPTUREOPENDEVICE = ::std::option::Option<unsafe extern "C" fn(devicename: *const ALCchar, frequency: ALCuint, format: ALCenum, buffersize: ALCsizei) -> *mut ALCdevice>;
-pub type LPALCCAPTURECLOSEDEVICE = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice) -> ALCboolean>;
-pub type LPALCCAPTURESTART = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice)>;
-pub type LPALCCAPTURESTOP = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice)>;
-pub type LPALCCAPTURESAMPLES = ::std::option::Option<unsafe extern "C" fn(device: *mut ALCdevice, buffer: *mut ALCvoid, samples: ALCsizei)>;

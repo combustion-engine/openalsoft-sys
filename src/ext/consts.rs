@@ -1,4 +1,4 @@
-use ::types::*;
+use ::al::types::*;
 
 pub const AL_LOKI_IMA_ADPCM_format: ALenum = 1;
 pub const AL_FORMAT_IMA_ADPCM_MONO16_EXT: ALenum = 65536;

@@ -1,4 +1,4 @@
-use ::types::*;
+use ::al::types::*;
 
 pub type LPEFXEAXREVERBPROPERTIES = *mut super::EFXEAXREVERBPROPERTIES;
 

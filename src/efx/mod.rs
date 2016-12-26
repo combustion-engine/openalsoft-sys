@@ -1,13 +1,10 @@
 //! OpenAL Effects
 
-use ::types::*;
+pub mod types;
+pub mod consts;
 
-pub mod efx_types;
 #[cfg(feature = "presets")]
 pub mod presets;
-pub mod efx_consts;
-
-pub use self::efx_types::*;
 
 pub const ALC_EXT_EFX_NAME: &'static str = "ALC_EXT_EFX";
 
@@ -43,37 +40,41 @@ impl ::std::default::Default for EFXEAXREVERBPROPERTIES {
     fn default() -> Self { unsafe { ::std::mem::zeroed() } }
 }
 
-extern "C" {
-    pub fn alGenEffects(n: ALsizei, effects: *mut ALuint) -> ALvoid;
-    pub fn alDeleteEffects(n: ALsizei, effects: *const ALuint) -> ALvoid;
-    pub fn alIsEffect(effect: ALuint) -> ALboolean;
-    pub fn alEffecti(effect: ALuint, param: ALenum, iValue: ALint) -> ALvoid;
-    pub fn alEffectiv(effect: ALuint, param: ALenum, piValues: *const ALint) -> ALvoid;
-    pub fn alEffectf(effect: ALuint, param: ALenum, flValue: ALfloat) -> ALvoid;
-    pub fn alEffectfv(effect: ALuint, param: ALenum, pflValues: *const ALfloat) -> ALvoid;
-    pub fn alGetEffecti(effect: ALuint, param: ALenum, piValue: *mut ALint) -> ALvoid;
-    pub fn alGetEffectiv(effect: ALuint, param: ALenum, piValues: *mut ALint) -> ALvoid;
-    pub fn alGetEffectf(effect: ALuint, param: ALenum, pflValue: *mut ALfloat) -> ALvoid;
-    pub fn alGetEffectfv(effect: ALuint, param: ALenum, pflValues: *mut ALfloat) -> ALvoid;
-    pub fn alGenFilters(n: ALsizei, filters: *mut ALuint) -> ALvoid;
-    pub fn alDeleteFilters(n: ALsizei, filters: *const ALuint) -> ALvoid;
-    pub fn alIsFilter(filter: ALuint) -> ALboolean;
-    pub fn alFilteri(filter: ALuint, param: ALenum, iValue: ALint) -> ALvoid;
-    pub fn alFilteriv(filter: ALuint, param: ALenum, piValues: *const ALint) -> ALvoid;pub fn alFilterf(filter: ALuint, param: ALenum, flValue: ALfloat) -> ALvoid;
-    pub fn alFilterfv(filter: ALuint, param: ALenum, pflValues: *const ALfloat) -> ALvoid;
-    pub fn alGetFilteri(filter: ALuint, param: ALenum, piValue: *mut ALint) -> ALvoid;
-    pub fn alGetFilteriv(filter: ALuint, param: ALenum, piValues: *mut ALint) -> ALvoid;
-    pub fn alGetFilterf(filter: ALuint, param: ALenum, pflValue: *mut ALfloat) -> ALvoid;
-    pub fn alGetFilterfv(filter: ALuint, param: ALenum, pflValues: *mut ALfloat) -> ALvoid;
-    pub fn alGenAuxiliaryEffectSlots(n: ALsizei, effectslots: *mut ALuint) -> ALvoid;
-    pub fn alDeleteAuxiliaryEffectSlots(n: ALsizei, effectslots: *const ALuint) -> ALvoid;
-    pub fn alIsAuxiliaryEffectSlot(effectslot: ALuint) -> ALboolean;
-    pub fn alAuxiliaryEffectSloti(effectslot: ALuint, param: ALenum, iValue: ALint) -> ALvoid;
-    pub fn alAuxiliaryEffectSlotiv(effectslot: ALuint, param: ALenum, piValues: *const ALint) -> ALvoid;
-    pub fn alAuxiliaryEffectSlotf(effectslot: ALuint, param: ALenum, flValue: ALfloat) -> ALvoid;
-    pub fn alAuxiliaryEffectSlotfv(effectslot: ALuint, param: ALenum, pflValues: *const ALfloat) -> ALvoid;
-    pub fn alGetAuxiliaryEffectSloti(effectslot: ALuint, param: ALenum, piValue: *mut ALint) -> ALvoid;
-    pub fn alGetAuxiliaryEffectSlotiv(effectslot: ALuint, param: ALenum, piValues: *mut ALint) -> ALvoid;
-    pub fn alGetAuxiliaryEffectSlotf(effectslot: ALuint, param: ALenum, pflValue: *mut ALfloat) -> ALvoid;
-    pub fn alGetAuxiliaryEffectSlotfv(effectslot: ALuint, param: ALenum, pflValues: *mut ALfloat) -> ALvoid;
+pub mod ffi {
+    use ::al::types::*;
+
+    extern "C" {
+        pub fn alGenEffects(n: ALsizei, effects: *mut ALuint) -> ALvoid;
+        pub fn alDeleteEffects(n: ALsizei, effects: *const ALuint) -> ALvoid;
+        pub fn alIsEffect(effect: ALuint) -> ALboolean;
+        pub fn alEffecti(effect: ALuint, param: ALenum, iValue: ALint) -> ALvoid;
+        pub fn alEffectiv(effect: ALuint, param: ALenum, piValues: *const ALint) -> ALvoid;
+        pub fn alEffectf(effect: ALuint, param: ALenum, flValue: ALfloat) -> ALvoid;
+        pub fn alEffectfv(effect: ALuint, param: ALenum, pflValues: *const ALfloat) -> ALvoid;
+        pub fn alGetEffecti(effect: ALuint, param: ALenum, piValue: *mut ALint) -> ALvoid;
+        pub fn alGetEffectiv(effect: ALuint, param: ALenum, piValues: *mut ALint) -> ALvoid;
+        pub fn alGetEffectf(effect: ALuint, param: ALenum, pflValue: *mut ALfloat) -> ALvoid;
+        pub fn alGetEffectfv(effect: ALuint, param: ALenum, pflValues: *mut ALfloat) -> ALvoid;
+        pub fn alGenFilters(n: ALsizei, filters: *mut ALuint) -> ALvoid;
+        pub fn alDeleteFilters(n: ALsizei, filters: *const ALuint) -> ALvoid;
+        pub fn alIsFilter(filter: ALuint) -> ALboolean;
+        pub fn alFilteri(filter: ALuint, param: ALenum, iValue: ALint) -> ALvoid;
+        pub fn alFilteriv(filter: ALuint, param: ALenum, piValues: *const ALint) -> ALvoid;pub fn alFilterf(filter: ALuint, param: ALenum, flValue: ALfloat) -> ALvoid;
+        pub fn alFilterfv(filter: ALuint, param: ALenum, pflValues: *const ALfloat) -> ALvoid;
+        pub fn alGetFilteri(filter: ALuint, param: ALenum, piValue: *mut ALint) -> ALvoid;
+        pub fn alGetFilteriv(filter: ALuint, param: ALenum, piValues: *mut ALint) -> ALvoid;
+        pub fn alGetFilterf(filter: ALuint, param: ALenum, pflValue: *mut ALfloat) -> ALvoid;
+        pub fn alGetFilterfv(filter: ALuint, param: ALenum, pflValues: *mut ALfloat) -> ALvoid;
+        pub fn alGenAuxiliaryEffectSlots(n: ALsizei, effectslots: *mut ALuint) -> ALvoid;
+        pub fn alDeleteAuxiliaryEffectSlots(n: ALsizei, effectslots: *const ALuint) -> ALvoid;
+        pub fn alIsAuxiliaryEffectSlot(effectslot: ALuint) -> ALboolean;
+        pub fn alAuxiliaryEffectSloti(effectslot: ALuint, param: ALenum, iValue: ALint) -> ALvoid;
+        pub fn alAuxiliaryEffectSlotiv(effectslot: ALuint, param: ALenum, piValues: *const ALint) -> ALvoid;
+        pub fn alAuxiliaryEffectSlotf(effectslot: ALuint, param: ALenum, flValue: ALfloat) -> ALvoid;
+        pub fn alAuxiliaryEffectSlotfv(effectslot: ALuint, param: ALenum, pflValues: *const ALfloat) -> ALvoid;
+        pub fn alGetAuxiliaryEffectSloti(effectslot: ALuint, param: ALenum, piValue: *mut ALint) -> ALvoid;
+        pub fn alGetAuxiliaryEffectSlotiv(effectslot: ALuint, param: ALenum, piValues: *mut ALint) -> ALvoid;
+        pub fn alGetAuxiliaryEffectSlotf(effectslot: ALuint, param: ALenum, pflValue: *mut ALfloat) -> ALvoid;
+        pub fn alGetAuxiliaryEffectSlotfv(effectslot: ALuint, param: ALenum, pflValues: *mut ALfloat) -> ALvoid;
+    }
 }

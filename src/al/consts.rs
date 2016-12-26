@@ -1,5 +1,3 @@
-//! OpenAL Constants
-
 use super::types::*;
 
 pub const AL_INVALID: ALenum = -1;
@@ -68,37 +66,4 @@ pub const AL_LINEAR_DISTANCE: ALenum = 53251;
 pub const AL_LINEAR_DISTANCE_CLAMPED: ALenum = 53252;
 pub const AL_EXPONENT_DISTANCE: ALenum = 53253;
 pub const AL_EXPONENT_DISTANCE_CLAMPED: ALenum = 53254;
-
-pub const ALC_INVALID: ALenum = 0;
-pub const ALC_VERSION_0_1: ALenum = 1;
-pub const ALC_FALSE: ALCboolean = 0;
-pub const ALC_TRUE: ALCboolean = 1;
-pub const ALC_FREQUENCY: ALenum = 4103;
-pub const ALC_REFRESH: ALenum = 4104;
-pub const ALC_SYNC: ALenum = 4105;
-pub const ALC_MONO_SOURCES: ALenum = 4112;
-pub const ALC_STEREO_SOURCES: ALenum = 4113;
-pub const ALC_NO_ERROR: ALenum = 0;
-pub const ALC_INVALID_DEVICE: ALenum = 40961;
-pub const ALC_INVALID_CONTEXT: ALenum = 40962;
-pub const ALC_INVALID_ENUM: ALenum = 40963;
-pub const ALC_INVALID_VALUE: ALenum = 40964;
-pub const ALC_OUT_OF_MEMORY: ALenum = 40965;
-pub const ALC_MAJOR_VERSION: ALenum = 4096;
-pub const ALC_MINOR_VERSION: ALenum = 4097;
-pub const ALC_ATTRIBUTES_SIZE: ALenum = 4098;
-pub const ALC_ALL_ATTRIBUTES: ALenum = 4099;
-pub const ALC_DEFAULT_DEVICE_SPECIFIER: ALenum = 4100;
-pub const ALC_DEVICE_SPECIFIER: ALenum = 4101;
-pub const ALC_EXTENSIONS: ALenum = 4102;
-pub const ALC_EXT_CAPTURE: ALenum = 1;
-pub const ALC_CAPTURE_DEVICE_SPECIFIER: ALenum = 784;
-pub const ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER: ALenum = 785;
-pub const ALC_CAPTURE_SAMPLES: ALenum = 786;
-pub const ALC_ENUMERATE_ALL_EXT: ALenum = 1;
-pub const ALC_DEFAULT_ALL_DEVICES_SPECIFIER: ALenum = 4114;
-pub const ALC_ALL_DEVICES_SPECIFIER: ALenum = 4115;
-pub const ALC_EFX_MAJOR_VERSION: ALenum = 131073;
-pub const ALC_EFX_MINOR_VERSION: ALenum = 131074;
-pub const ALC_MAX_AUXILIARY_SENDS: ALenum = 131075;
 pub const AL_METERS_PER_UNIT: ALenum = 131076;

@@ -1,4 +1,5 @@
-use ::types::*;
+use ::al::types::*;
+use ::alc::types::*;
 
 use libc::{int64_t, uint64_t};
 

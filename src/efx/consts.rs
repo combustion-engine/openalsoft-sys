@@ -1,5 +1,5 @@
-use ::types::*;
-use ::consts::*;
+use ::al::types::*;
+use ::al::consts::*;
 
 pub const AL_DIRECT_FILTER: ALenum = 131077;
 pub const AL_AUXILIARY_SEND_FILTER: ALenum = 131078;
