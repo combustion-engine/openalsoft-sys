@@ -8,6 +8,32 @@ pub mod presets;
 
 pub const ALC_EXT_EFX_NAME: &'static str = "ALC_EXT_EFX";
 
+pub const AL_EFX_FILTERS: &'static [&'static str] = &[
+    "AL_FILTER_LOWPASS", "AL_FILTER_HIGHPASS", "AL_FILTER_BANDPASS"
+];
+
+pub const AL_EFX_FILTER_NAMES: &'static [&'static str] = &[
+    "Low-pass", "High-pass", "Band-pass"
+];
+
+pub const AL_EFX_EFFECTS: &'static [&'static str] = &[
+    "AL_EFFECT_EAXREVERB", "AL_EFFECT_REVERB", "AL_EFFECT_CHORUS",
+    "AL_EFFECT_DISTORTION", "AL_EFFECT_ECHO", "AL_EFFECT_FLANGER",
+    "AL_EFFECT_FREQUENCY_SHIFTER", "AL_EFFECT_VOCAL_MORPHER",
+    "AL_EFFECT_PITCH_SHIFTER", "AL_EFFECT_RING_MODULATOR",
+    "AL_EFFECT_AUTOWAH", "AL_EFFECT_COMPRESSOR", "AL_EFFECT_EQUALIZER"
+];
+
+pub const AL_EFX_EFFECT_NAMES: &'static [&'static str] = &[
+    "EAX Reverb", "Reverb", "Chorus", "Distortion", "Echo", "Flanger",
+    "Frequency Shifter", "Vocal Morpher", "Pitch Shifter",
+    "Ring Modulator", "Autowah", "Compressor", "Equalizer"
+];
+
+pub const AL_EFX_DEDICATED_EFFECTS: &'static [&'static str] = &["AL_EFFECT_DEDICATED_DIALOGUE", "AL_EFFECT_DEDICATED_LOW_FREQUENCY_EFFECT", "AL_DEDICATED_GAIN"];
+
+pub const AL_EFX_DEDICATED_EFFECT_NAMES: &'static [&'static str] = &["Dedicated Dialogue", "Dedicated LFE", "Dedicated Gain"];
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct EFXEAXREVERBPROPERTIES {
