@@ -4,6 +4,8 @@ pub mod types;
 pub mod consts;
 
 pub const AL_EXT_FOLDBACK_NAME: &'static str = "AL_EXT_FOLDBACK";
+pub const ALC_ENUMERATE_ALL_EXT_NAME: &'static str = "ALC_ENUMERATE_ALL_EXT";
+pub const ALC_SOFT_HRTF_NAME: &'static str = "ALC_SOFT_HRTF";
 
 pub mod ffi {
     use ::al::types::*;
