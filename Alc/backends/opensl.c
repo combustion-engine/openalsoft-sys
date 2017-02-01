@@ -22,9 +22,11 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <jni.h>
 
 #include "alMain.h"
 #include "alu.h"
+#include "compat.h"
 #include "threads.h"
 
 #include <SLES/OpenSLES.h>
@@ -231,16 +233,82 @@ static ALCboolean opensl_reset_playback(ALCdevice *Device)
     SLDataFormat_PCM format_pcm;
     SLDataSource audioSrc;
     SLDataSink audioSnk;
+    ALuint sampleRate;
     SLInterfaceID id;
-    SLboolean req;
     SLresult result;
+    SLboolean req;
 
+    if((Device->Flags&DEVICE_FREQUENCY_REQUEST))
+        sampleRate = Device->Frequency;
+    else
+    {
+        JNIEnv *env = Android_GetJNIEnv();
 
-    Device->UpdateSize = (ALuint64)Device->UpdateSize * 44100 / Device->Frequency;
-    Device->UpdateSize = Device->UpdateSize * Device->NumUpdates / 2;
-    Device->NumUpdates = 2;
+        /* Get necessary stuff for using java.lang.Integer,
+         * android.content.Context, and android.media.AudioManager.
+         */
+        jclass int_cls = JCALL(env,FindClass)("java/lang/Integer");
+        jmethodID int_parseint = JCALL(env,GetStaticMethodID)(int_cls,
+            "parseInt", "(Ljava/lang/String;)I"
+        );
+        TRACE("Integer: %p, parseInt: %p\n", int_cls, int_parseint);
 
-    Device->Frequency = 44100;
+        jclass ctx_cls = (*env)->FindClass(env, "android/content/Context");
+        jfieldID ctx_audsvc = (*env)->GetStaticFieldID(env, ctx_cls,
+            "AUDIO_SERVICE", "Ljava/lang/String;"
+        );
+        jmethodID ctx_getSysSvc = (*env)->GetMethodID(env, ctx_cls,
+            "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;"
+        );
+        TRACE("Context: %p, AUDIO_SERVICE: %p, getSystemService: %p\n",
+              ctx_cls, ctx_audsvc, ctx_getSysSvc);
+
+        jclass audmgr_cls = JCALL(env,FindClass)("android/media/AudioManager");
+        jfieldID audmgr_prop_out_srate = JCALL(env,GetStaticFieldID)(audmgr_cls,
+            "PROPERTY_OUTPUT_SAMPLE_RATE", "Ljava/lang/String;"
+        );
+        jmethodID audmgr_getproperty = JCALL(env,GetMethodID)(audmgr_cls,
+            "getProperty", "(Ljava/lang/String;)Ljava/lang/Object;"
+        );
+        TRACE("AudioManager: %p, PROPERTY_OUTPUT_SAMPLE_RATE: %p, getProperty: %p\n",
+              audmgr_cls, audmgr_prop_out_srate, audmgr_getproperty);
+
+        const char *strchars;
+        jstring strobj;
+
+        /* Now make the calls. */
+        //AudioManager audMgr = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        strobj = JCALL(env,GetStaticObjectField)(ctx_cls, ctx_audsvc);
+        jobject audMgr = JCALL(env,CallStaticObjectMethod)(ctx_cls, ctx_getSysSvc, strobj);
+        strchars = JCALL(env,GetStringUTFChars)(strobj, NULL);
+        TRACE("Context.getSystemService(%s) = %p\n", strchars, audMgr);
+        JCALL(env,ReleaseStringUTFChars)(strobj, strchars);
+
+        //String srateStr = audMgr.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+        strobj = JCALL(env,GetStaticObjectField)(audmgr_cls, audmgr_prop_out_srate);
+        jstring srateStr = JCALL(env,CallObjectMethod)(audMgr, audmgr_getproperty, strobj);
+        strchars = JCALL(env,GetStringUTFChars)(strobj, NULL);
+        TRACE("audMgr.getProperty(%s) = %p\n", strchars, srateStr);
+        JCALL(env,ReleaseStringUTFChars)(strobj, strchars);
+
+        //int sampleRate = Integer.parseInt(srateStr);
+        sampleRate = JCALL(env,CallStaticIntMethod)(int_cls, int_parseint, srateStr);
+
+        strchars = JCALL(env,GetStringUTFChars)(srateStr, NULL);
+        TRACE("Got system sample rate %uhz (%s)\n", sampleRate, strchars);
+        JCALL(env,ReleaseStringUTFChars)(srateStr, strchars);
+
+        if(!sampleRate) sampleRate = Device->Frequency;
+        else sampleRate = maxu(sampleRate, MIN_OUTPUT_RATE);
+    }
+
+    if(sampleRate != Device->Frequency)
+    {
+        Device->NumUpdates = (Device->NumUpdates*sampleRate + (Device->Frequency>>1)) /
+                             Device->Frequency;
+        Device->NumUpdates = maxu(Device->NumUpdates, 2);
+        Device->Frequency = sampleRate;
+    }
     Device->FmtChans = DevFmtStereo;
     Device->FmtType = DevFmtShort;
 
