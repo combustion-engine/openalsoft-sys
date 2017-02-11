@@ -99,7 +99,7 @@ static struct BackendInfo BackendList[] = {
     { "port", ALCportBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
 #endif
 #ifdef HAVE_OPENSL
-    { "opensl", NULL, alc_opensl_init, alc_opensl_deinit, alc_opensl_probe, EmptyFuncs },
+    { "opensl", ALCopenslBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
 #endif
 
     { "null", ALCnullBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
@@ -1179,6 +1179,12 @@ static void CleanupJNIEnv(void* UNUSED(ptr))
 
 void *Android_GetJNIEnv(void)
 {
+    if(!gJavaVM)
+    {
+        WARN("gJavaVM is NULL!\n");
+        return NULL;
+    }
+
     /* http://developer.android.com/guide/practices/jni.html
      *
      * All threads are Linux threads, scheduled by the kernel. They're usually
