@@ -4,6 +4,7 @@
 #include "alMain.h"
 #include "alEffect.h"
 
+#include "atomic.h"
 #include "align.h"
 
 #ifdef __cplusplus
@@ -74,22 +75,26 @@ static const struct ALeffectStateFactoryVtable T##_ALeffectStateFactory_vtable =
 #define MAX_EFFECT_CHANNELS (4)
 
 
-struct ALeffectslotProps {
-    ATOMIC(ALfloat)   Gain;
-    ATOMIC(ALboolean) AuxSendAuto;
+struct ALeffectslotArray {
+    ALsizei count;
+    struct ALeffectslot *slot[];
+};
 
-    ATOMIC(ALenum) Type;
+
+struct ALeffectslotProps {
+    ALfloat   Gain;
+    ALboolean AuxSendAuto;
+
+    ALenum Type;
     ALeffectProps Props;
 
-    ATOMIC(ALeffectState*) State;
+    ALeffectState *State;
 
     ATOMIC(struct ALeffectslotProps*) next;
 };
 
 
 typedef struct ALeffectslot {
-    ALboolean NeedsUpdate;
-
     ALfloat   Gain;
     ALboolean AuxSendAuto;
 
@@ -99,6 +104,8 @@ typedef struct ALeffectslot {
 
         ALeffectState *State;
     } Effect;
+
+    ATOMIC_FLAG PropsClean;
 
     RefCount ref;
 
@@ -133,8 +140,6 @@ typedef struct ALeffectslot {
      * first-order device output (FOAOut).
      */
     alignas(16) ALfloat WetBuffer[MAX_EFFECT_CHANNELS][BUFFERSIZE];
-
-    ATOMIC(struct ALeffectslot*) next;
 } ALeffectslot;
 
 inline void LockEffectSlotsRead(ALCcontext *context)

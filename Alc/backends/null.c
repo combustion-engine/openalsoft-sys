@@ -109,7 +109,9 @@ static int ALCnullBackend_mixerProc(void *ptr)
             al_nssleep(restTime);
         else while(avail-done >= device->UpdateSize)
         {
+            ALCnullBackend_lock(self);
             aluMixData(device, NULL, device->UpdateSize);
+            ALCnullBackend_unlock(self);
             done += device->UpdateSize;
         }
     }
@@ -128,7 +130,7 @@ static ALCenum ALCnullBackend_open(ALCnullBackend *self, const ALCchar *name)
         return ALC_INVALID_VALUE;
 
     device = STATIC_CAST(ALCbackend, self)->mDevice;
-    al_string_copy_cstr(&device->DeviceName, name);
+    alstr_copy_cstr(&device->DeviceName, name);
 
     return ALC_NO_ERROR;
 }

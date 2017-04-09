@@ -96,6 +96,8 @@ static ALCboolean jack_load(void)
 #ifdef HAVE_DYNLOAD
     if(!jack_handle)
     {
+        al_string missing_funcs = AL_STRING_INIT_STATIC();
+
 #ifdef _WIN32
 #define JACKLIB "libjack.dll"
 #else
@@ -103,13 +105,17 @@ static ALCboolean jack_load(void)
 #endif
         jack_handle = LoadLib(JACKLIB);
         if(!jack_handle)
+        {
+            WARN("Failed to load %s\n", JACKLIB);
             return ALC_FALSE;
+        }
 
         error = ALC_FALSE;
 #define LOAD_FUNC(f) do {                                                     \
     p##f = GetSymbol(jack_handle, #f);                                        \
     if(p##f == NULL) {                                                        \
         error = ALC_TRUE;                                                     \
+        alstr_append_cstr(&missing_funcs, "\n" #f);                           \
     }                                                                         \
 } while(0)
         JACK_FUNCS(LOAD_FUNC);
@@ -117,10 +123,11 @@ static ALCboolean jack_load(void)
 
         if(error)
         {
+            WARN("Missing expected functions:%s\n", alstr_get_cstr(missing_funcs));
             CloseLib(jack_handle);
             jack_handle = NULL;
-            return ALC_FALSE;
         }
+        alstr_reset(&missing_funcs);
     }
 #endif
 
@@ -213,7 +220,7 @@ static int ALCjackPlayback_bufferSizeNotify(jack_nframes_t numframes, void *arg)
     device->NumUpdates = 2;
 
     bufsize = device->UpdateSize;
-    if(ConfigValueUInt(al_string_get_cstr(device->DeviceName), "jack", "buffer-size", &bufsize))
+    if(ConfigValueUInt(alstr_get_cstr(device->DeviceName), "jack", "buffer-size", &bufsize))
         bufsize = maxu(NextPowerOf2(bufsize), device->UpdateSize);
     bufsize += device->UpdateSize;
     device->NumUpdates = bufsize / device->UpdateSize;
@@ -366,7 +373,7 @@ static ALCenum ALCjackPlayback_open(ALCjackPlayback *self, const ALCchar *name)
     jack_set_process_callback(self->Client, ALCjackPlayback_process, self);
     jack_set_buffer_size_callback(self->Client, ALCjackPlayback_bufferSizeNotify, self);
 
-    al_string_copy_cstr(&device->DeviceName, name);
+    alstr_copy_cstr(&device->DeviceName, name);
 
     return ALC_NO_ERROR;
 }
@@ -408,7 +415,7 @@ static ALCboolean ALCjackPlayback_reset(ALCjackPlayback *self)
     device->NumUpdates = 2;
 
     bufsize = device->UpdateSize;
-    if(ConfigValueUInt(al_string_get_cstr(device->DeviceName), "jack", "buffer-size", &bufsize))
+    if(ConfigValueUInt(alstr_get_cstr(device->DeviceName), "jack", "buffer-size", &bufsize))
         bufsize = maxu(NextPowerOf2(bufsize), device->UpdateSize);
     bufsize += device->UpdateSize;
     device->NumUpdates = bufsize / device->UpdateSize;

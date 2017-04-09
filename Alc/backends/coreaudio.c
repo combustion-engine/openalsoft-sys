@@ -89,8 +89,10 @@ static OSStatus ca_callback(void *inRefCon, AudioUnitRenderActionFlags *ioAction
     ALCdevice *device = (ALCdevice*)inRefCon;
     ca_data *data = (ca_data*)device->ExtraData;
 
+    ALCdevice_Lock(device);
     aluMixData(device, ioData->mBuffers[0].mData,
                ioData->mBuffers[0].mDataByteSize / data->frameSize);
+    ALCdevice_Unlock(device);
 
     return noErr;
 }
@@ -181,7 +183,7 @@ static ALCenum ca_open_playback(ALCdevice *device, const ALCchar *deviceName)
         return ALC_INVALID_VALUE;
     }
 
-    al_string_copy_cstr(&device->DeviceName, deviceName);
+    alstr_copy_cstr(&device->DeviceName, deviceName);
     device->ExtraData = data;
     return ALC_NO_ERROR;
 }
@@ -594,7 +596,7 @@ static ALCenum ca_open_capture(ALCdevice *device, const ALCchar *deviceName)
     );
     if(!data->ring) goto error;
 
-    al_string_copy_cstr(&device->DeviceName, deviceName);
+    alstr_copy_cstr(&device->DeviceName, deviceName);
 
     return ALC_NO_ERROR;
 

@@ -6,21 +6,8 @@
 
 #include "alMain.h"
 #include "alstring.h"
+#include "atomic.h"
 
-
-struct Hrtf {
-    ALuint sampleRate;
-    ALsizei irSize;
-    ALubyte evCount;
-
-    const ALubyte *azCount;
-    const ALushort *evOffset;
-    const ALshort *coeffs;
-    const ALubyte *delays;
-
-    const char *filename;
-    struct Hrtf *next;
-};
 
 #define HRTFDELAY_BITS    (20)
 #define HRTFDELAY_FRACONE (1<<HRTFDELAY_BITS)
@@ -31,12 +18,32 @@ struct Hrtf {
  */
 #define HRTF_AMBI_MAX_CHANNELS 16
 
+
+struct HrtfEntry;
+
+struct Hrtf {
+    RefCount ref;
+
+    ALuint sampleRate;
+    ALsizei irSize;
+    ALubyte evCount;
+
+    const ALubyte *azCount;
+    const ALushort *evOffset;
+    const ALfloat (*coeffs)[2];
+    const ALubyte (*delays)[2];
+};
+
+
 void FreeHrtfs(void);
 
-vector_HrtfEntry EnumerateHrtf(const_al_string devname);
-void FreeHrtfList(vector_HrtfEntry *list);
+vector_EnumeratedHrtf EnumerateHrtf(const_al_string devname);
+void FreeHrtfList(vector_EnumeratedHrtf *list);
+struct Hrtf *GetLoadedHrtf(struct HrtfEntry *entry);
+void Hrtf_IncRef(struct Hrtf *hrtf);
+void Hrtf_DecRef(struct Hrtf *hrtf);
 
-void GetHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, ALfloat spread, ALfloat gain, ALfloat (*coeffs)[2], ALsizei *delays);
+void GetHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, ALfloat spread, ALfloat (*coeffs)[2], ALsizei *delays);
 
 /**
  * Produces HRTF filter coefficients for decoding B-Format, given a set of
@@ -44,6 +51,6 @@ void GetHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, 
  * returned coefficients are ordered and scaled according to the matrices.
  * Returns the maximum impulse-response length of the generated coefficients.
  */
-ALsizei BuildBFormatHrtf(const struct Hrtf *Hrtf, ALfloat (*coeffs)[HRIR_LENGTH][2], ALsizei NumChannels, const ALfloat (*restrict AmbiPoints)[2], const ALfloat (*restrict AmbiMatrix)[2][MAX_AMBI_COEFFS], ALsizei AmbiCount);
+ALsizei BuildBFormatHrtf(const struct Hrtf *Hrtf, DirectHrtfState *state, ALsizei NumChannels, const ALfloat (*restrict AmbiPoints)[2], const ALfloat (*restrict AmbiMatrix)[2][MAX_AMBI_COEFFS], ALsizei AmbiCount);
 
 #endif /* ALC_HRTF_H */

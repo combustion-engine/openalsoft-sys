@@ -29,6 +29,29 @@
 #include "almalloc.h"
 #include "threads.h"
 
+#ifndef ALC_SOFT_loopback2
+#define ALC_SOFT_loopback2 1
+#define ALC_AMBISONIC_LAYOUT_SOFT                0x1997
+#define ALC_AMBISONIC_SCALING_SOFT               0x1998
+#define ALC_AMBISONIC_ORDER_SOFT                 0x1999
+
+#define ALC_BFORMAT3D_SOFT                       0x1508
+
+/* Ambisonic layouts */
+#define ALC_ACN_SOFT                             0x1600
+#define ALC_FUMA_SOFT                            0x1601
+
+/* Ambisonic scalings (normalization) */
+#define ALC_N3D_SOFT                             0x1700
+#define ALC_SN3D_SOFT                            0x1701
+/*#define ALC_FUMA_SOFT*/
+
+typedef ALCboolean (ALC_APIENTRY*LPALCISAMBISONICFORMATSUPPORTEDSOFT)(ALCdevice *device, ALCenum layout, ALCenum scaling, ALsizei order);
+#ifdef AL_ALEXT_PROTOTYPES
+ALC_API ALCboolean ALC_APIENTRY alcIsAmbisonicFormatSupportedSOFT(ALCdevice *device, ALCenum layout, ALCenum scaling, ALsizei order);
+#endif
+#endif
+
 #ifndef ALC_SOFT_device_clock
 #define ALC_SOFT_device_clock 1
 typedef int64_t ALCint64SOFT;
@@ -335,6 +358,7 @@ extern "C" {
 #endif
 
 struct Hrtf;
+struct HrtfEntry;
 
 
 #define DEFAULT_OUTPUT_RATE  (44100)
@@ -354,6 +378,13 @@ inline ALuint NextPowerOf2(ALuint value)
         value |= value>>16;
     }
     return value+1;
+}
+
+/** Round up a value to the next multiple. */
+inline size_t RoundUp(size_t value, size_t r)
+{
+    value += r-1;
+    return value - (value%r);
 }
 
 /* Fast float-to-int conversion. Assumes the FPU is already in round-to-zero
@@ -401,9 +432,6 @@ typedef struct {
 ALCboolean alc_ca_init(BackendFuncs *func_list);
 void alc_ca_deinit(void);
 void alc_ca_probe(enum DevProbe type);
-ALCboolean alc_opensl_init(BackendFuncs *func_list);
-void alc_opensl_deinit(void);
-void alc_opensl_probe(enum DevProbe type);
 ALCboolean alc_qsa_init(BackendFuncs *func_list);
 void alc_qsa_deinit(void);
 void alc_qsa_probe(enum DevProbe type);
@@ -503,12 +531,19 @@ inline ALsizei FrameSizeFromDevFmt(enum DevFmtChannels chans, enum DevFmtType ty
     return ChannelsFromDevFmt(chans) * BytesFromDevFmt(type);
 }
 
-enum AmbiFormat {
-    AmbiFormat_FuMa,     /* FuMa channel order and normalization */
-    AmbiFormat_ACN_SN3D, /* ACN channel order and SN3D normalization */
-    AmbiFormat_ACN_N3D,  /* ACN channel order and N3D normalization */
+enum AmbiLayout {
+    AmbiLayout_FuMa = ALC_FUMA_SOFT, /* FuMa channel order */
+    AmbiLayout_ACN = ALC_ACN_SOFT,   /* ACN channel order */
 
-    AmbiFormat_Default = AmbiFormat_ACN_SN3D
+    AmbiLayout_Default = AmbiLayout_ACN
+};
+
+enum AmbiNorm {
+    AmbiNorm_FuMa = ALC_FUMA_SOFT, /* FuMa normalization */
+    AmbiNorm_SN3D = ALC_SN3D_SOFT, /* SN3D normalization */
+    AmbiNorm_N3D = ALC_N3D_SOFT,   /* N3D normalization */
+
+    AmbiNorm_Default = AmbiNorm_SN3D
 };
 
 
@@ -586,15 +621,35 @@ typedef struct HrtfState {
 typedef struct HrtfParams {
     alignas(16) ALfloat Coeffs[HRIR_LENGTH][2];
     ALsizei Delay[2];
+    ALfloat Gain;
 } HrtfParams;
 
-typedef struct HrtfEntry {
+typedef struct DirectHrtfState {
+    /* HRTF filter state for dry buffer content */
+    ALsizei Offset;
+    ALsizei IrSize;
+    struct {
+        alignas(16) ALfloat Values[HRIR_LENGTH][2];
+        alignas(16) ALfloat Coeffs[HRIR_LENGTH][2];
+    } Chan[];
+} DirectHrtfState;
+
+typedef struct EnumeratedHrtf {
     al_string name;
 
-    const struct Hrtf *hrtf;
-} HrtfEntry;
-TYPEDEF_VECTOR(HrtfEntry, vector_HrtfEntry)
+    struct HrtfEntry *hrtf;
+} EnumeratedHrtf;
+TYPEDEF_VECTOR(EnumeratedHrtf, vector_EnumeratedHrtf)
 
+
+/* Maximum delay in samples for speaker distance compensation. */
+#define MAX_DELAY_LENGTH 1024
+
+typedef struct DistanceComp {
+    ALfloat Gain;
+    ALsizei Length; /* Valid range is [0...MAX_DELAY_LENGTH). */
+    ALfloat *Buffer;
+} DistanceComp;
 
 /* Size for temporary storage of buffer data, in ALfloats. Larger values need
  * more memory, while smaller values may need more iterations. The value needs
@@ -619,7 +674,8 @@ struct ALCdevice_struct
     /* For DevFmtAmbi* output only, specifies the channel order and
      * normalization.
      */
-    enum AmbiFormat AmbiFmt;
+    enum AmbiLayout AmbiLayout;
+    enum AmbiNorm   AmbiScale;
 
     al_string DeviceName;
 
@@ -632,7 +688,7 @@ struct ALCdevice_struct
 
     ALCuint NumMonoSources;
     ALCuint NumStereoSources;
-    ALuint  NumAuxSends;
+    ALsizei NumAuxSends;
 
     // Map of Buffers for this device
     UIntMap BufferMap;
@@ -643,19 +699,12 @@ struct ALCdevice_struct
     // Map of Filters for this device
     UIntMap FilterMap;
 
-    /* HRTF filter tables */
-    struct {
-        vector_HrtfEntry List;
-        al_string Name;
-        ALCenum Status;
-        const struct Hrtf *Handle;
-
-        /* HRTF filter state for dry buffer content */
-        alignas(16) ALfloat Values[9][HRIR_LENGTH][2];
-        alignas(16) ALfloat Coeffs[9][HRIR_LENGTH][2];
-        ALsizei Offset;
-        ALsizei IrSize;
-    } Hrtf;
+    /* HRTF state and info */
+    DirectHrtfState *Hrtf;
+    al_string HrtfName;
+    struct Hrtf *HrtfHandle;
+    vector_EnumeratedHrtf HrtfList;
+    ALCenum HrtfStatus;
 
     /* UHJ encoder state */
     struct Uhj2Encoder *Uhj_Encoder;
@@ -682,6 +731,7 @@ struct ALCdevice_struct
     alignas(16) ALfloat SourceData[BUFFERSIZE];
     alignas(16) ALfloat ResampledData[BUFFERSIZE];
     alignas(16) ALfloat FilteredData[BUFFERSIZE];
+    alignas(16) ALfloat NFCtrlData[BUFFERSIZE];
 
     /* The "dry" path corresponds to the main output. */
     struct {
@@ -694,6 +744,7 @@ struct ALCdevice_struct
 
         ALfloat (*Buffer)[BUFFERSIZE];
         ALsizei NumChannels;
+        ALsizei NumChannelsPerOrder[MAX_AMBI_ORDER+1];
     } Dry;
 
     /* First-order ambisonics output, to be upsampled to the dry buffer if different. */
@@ -715,6 +766,14 @@ struct ALCdevice_struct
         ALfloat (*Buffer)[BUFFERSIZE];
         ALsizei NumChannels;
     } RealOut;
+
+    /* The average speaker distance as determined by the ambdec configuration
+     * (or alternatively, by the NFC-HOA reference delay). Only used for NFC.
+     */
+    ALfloat AvgSpeakerDist;
+
+    /* Delay buffers used to compensate for speaker distances. */
+    DistanceComp ChannelDelay[MAX_OUTPUT_CHANNELS];
 
     /* Running count of the mixer invocations, in 31.1 fixed point. This
      * actually increments *twice* when mixing, first at the start and then at
@@ -793,11 +852,11 @@ struct ALCcontext_struct {
 
     ALfloat GainBoost;
 
-    struct ALvoice *Voices;
+    struct ALvoice **Voices;
     ALsizei VoiceCount;
     ALsizei MaxVoices;
 
-    ATOMIC(struct ALeffectslot*) ActiveAuxSlotList;
+    ATOMIC(struct ALeffectslotArray*) ActiveAuxSlots;
 
     ALCdevice  *Device;
     const ALCchar *ExtensionList;
@@ -813,26 +872,16 @@ ALCcontext *GetContextRef(void);
 void ALCcontext_IncRef(ALCcontext *context);
 void ALCcontext_DecRef(ALCcontext *context);
 
+void AllocateVoices(ALCcontext *context, ALsizei num_voices, ALsizei old_sends);
+
 void AppendAllDevicesList(const ALCchar *name);
 void AppendCaptureDeviceList(const ALCchar *name);
 
 void ALCdevice_Lock(ALCdevice *device);
 void ALCdevice_Unlock(ALCdevice *device);
 
-void ALCcontext_DeferUpdates(ALCcontext *context, ALenum type);
+void ALCcontext_DeferUpdates(ALCcontext *context);
 void ALCcontext_ProcessUpdates(ALCcontext *context);
-
-inline void LockContext(ALCcontext *context)
-{ ALCdevice_Lock(context->Device); }
-
-inline void UnlockContext(ALCcontext *context)
-{ ALCdevice_Unlock(context->Device); }
-
-enum {
-    DeferOff = AL_FALSE,
-    DeferAll,
-    DeferAllowPlay
-};
 
 
 typedef struct {
@@ -970,10 +1019,11 @@ void FillCPUCaps(ALuint capfilter);
 
 vector_al_string SearchDataFiles(const char *match, const char *subdir);
 
-/* Small hack to use a pointer-to-array type as a normal argument type.
- * Shouldn't be used directly. */
+/* Small hack to use a pointer-to-array types as a normal argument type.
+ * Shouldn't be used directly.
+ */
 typedef ALfloat ALfloatBUFFERSIZE[BUFFERSIZE];
-
+typedef ALfloat ALfloat2[2];
 
 #ifdef __cplusplus
 }

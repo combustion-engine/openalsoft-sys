@@ -36,7 +36,7 @@
 #include "bs2b.h"
 
 
-extern inline void CalcXYZCoeffs(ALfloat x, ALfloat y, ALfloat z, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS]);
+extern inline void CalcAngleCoeffs(ALfloat azimuth, ALfloat elevation, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS]);
 
 
 static const ALsizei FuMa2ACN[MAX_AMBI_COEFFS] = {
@@ -192,14 +192,12 @@ void CalcDirectionCoeffs(const ALfloat dir[3], ALfloat spread, ALfloat coeffs[MA
     }
 }
 
-void CalcAngleCoeffs(ALfloat azimuth, ALfloat elevation, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS])
+void CalcAnglePairwiseCoeffs(ALfloat azimuth, ALfloat elevation, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS])
 {
-    ALfloat dir[3] = {
-        sinf(azimuth) * cosf(elevation),
-        sinf(elevation),
-        -cosf(azimuth) * cosf(elevation)
-    };
-    CalcDirectionCoeffs(dir, spread, coeffs);
+    ALfloat sign = (azimuth < 0.0f) ? -1.0f : 1.0f;
+    if(!(fabsf(azimuth) > F_PI_2))
+        azimuth = minf(fabsf(azimuth) * F_PI_2 / (F_PI/6.0f), F_PI_2) * sign;
+    CalcAngleCoeffs(azimuth, elevation, spread, coeffs);
 }
 
 
@@ -237,7 +235,7 @@ void ComputePanningGainsMC(const ChannelConfig *chancoeffs, ALsizei numchans, AL
         float gain = 0.0f;
         for(j = 0;j < numcoeffs;j++)
             gain += chancoeffs[i][j]*coeffs[j];
-        gains[i] = gain * ingain;
+        gains[i] = clampf(gain, 0.0f, 1.0f) * ingain;
     }
     for(;i < MAX_OUTPUT_CHANNELS;i++)
         gains[i] = 0.0f;
@@ -262,7 +260,7 @@ void ComputeFirstOrderGainsMC(const ChannelConfig *chancoeffs, ALsizei numchans,
         float gain = 0.0f;
         for(j = 0;j < 4;j++)
             gain += chancoeffs[i][j] * mtx[j];
-        gains[i] = gain * ingain;
+        gains[i] = clampf(gain, 0.0f, 1.0f) * ingain;
     }
     for(;i < MAX_OUTPUT_CHANNELS;i++)
         gains[i] = 0.0f;
@@ -388,45 +386,45 @@ static bool MakeSpeakerMap(ALCdevice *device, const AmbDecConf *conf, ALsizei sp
          * use the side channels when the device is configured for back,
          * and vice-versa.
          */
-        if(al_string_cmp_cstr(conf->Speakers[i].Name, "LF") == 0)
+        if(alstr_cmp_cstr(conf->Speakers[i].Name, "LF") == 0)
             c = GetChannelIdxByName(device->RealOut, FrontLeft);
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "RF") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "RF") == 0)
             c = GetChannelIdxByName(device->RealOut, FrontRight);
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "CE") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "CE") == 0)
             c = GetChannelIdxByName(device->RealOut, FrontCenter);
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "LS") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "LS") == 0)
         {
             if(device->FmtChans == DevFmtX51Rear)
                 c = GetChannelIdxByName(device->RealOut, BackLeft);
             else
                 c = GetChannelIdxByName(device->RealOut, SideLeft);
         }
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "RS") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "RS") == 0)
         {
             if(device->FmtChans == DevFmtX51Rear)
                 c = GetChannelIdxByName(device->RealOut, BackRight);
             else
                 c = GetChannelIdxByName(device->RealOut, SideRight);
         }
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "LB") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "LB") == 0)
         {
             if(device->FmtChans == DevFmtX51)
                 c = GetChannelIdxByName(device->RealOut, SideLeft);
             else
                 c = GetChannelIdxByName(device->RealOut, BackLeft);
         }
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "RB") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "RB") == 0)
         {
             if(device->FmtChans == DevFmtX51)
                 c = GetChannelIdxByName(device->RealOut, SideRight);
             else
                 c = GetChannelIdxByName(device->RealOut, BackRight);
         }
-        else if(al_string_cmp_cstr(conf->Speakers[i].Name, "CB") == 0)
+        else if(alstr_cmp_cstr(conf->Speakers[i].Name, "CB") == 0)
             c = GetChannelIdxByName(device->RealOut, BackCenter);
         else
         {
-            const char *name = al_string_get_cstr(conf->Speakers[i].Name);
+            const char *name = alstr_get_cstr(conf->Speakers[i].Name);
             unsigned int n;
             char ch;
 
@@ -441,7 +439,7 @@ static bool MakeSpeakerMap(ALCdevice *device, const AmbDecConf *conf, ALsizei sp
         if(c == -1)
         {
             ERR("Failed to lookup AmbDec speaker label %s\n",
-                al_string_get_cstr(conf->Speakers[i].Name));
+                alstr_get_cstr(conf->Speakers[i].Name));
             return false;
         }
         speakermap[i] = c;
@@ -454,8 +452,8 @@ static bool MakeSpeakerMap(ALCdevice *device, const AmbDecConf *conf, ALsizei sp
 static const ChannelMap MonoCfg[1] = {
     { FrontCenter, { 1.0f } },
 }, StereoCfg[2] = {
-    { FrontLeft,   { 5.00000000e-1f,  2.88675135e-1f, 0.0f,  0.00000000e+0f } },
-    { FrontRight,  { 5.00000000e-1f, -2.88675135e-1f, 0.0f,  0.00000000e+0f } },
+    { FrontLeft,   { 5.00000000e-1f,  2.88675135e-1f, 0.0f,  1.19573156e-1f } },
+    { FrontRight,  { 5.00000000e-1f, -2.88675135e-1f, 0.0f,  1.19573156e-1f } },
 }, QuadCfg[4] = {
     { BackLeft,    { 3.53553391e-1f,  2.04124145e-1f, 0.0f, -2.04124145e-1f } },
     { FrontLeft,   { 3.53553391e-1f,  2.04124145e-1f, 0.0f,  2.04124145e-1f } },
@@ -488,6 +486,88 @@ static const ChannelMap MonoCfg[1] = {
     { SideRight,   { 2.04124145e-1f, -2.17760495e-1f, 0.0f,  0.00000000e+0f,  0.00000000e+0f, 0.0f, 0.0f, 0.0f, -1.49071198e-1f,  3.73460789e-2f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.00000000e+0f } },
     { BackRight,   { 2.04124145e-1f, -1.08880247e-1f, 0.0f, -1.88586120e-1f,  1.29099444e-1f, 0.0f, 0.0f, 0.0f,  7.45355993e-2f, -3.73460789e-2f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.00000000e+0f } },
 };
+
+static void InitNearFieldCtrl(ALCdevice *device, ALfloat ctrl_dist, ALsizei order, bool periphonic)
+{
+    const char *devname = alstr_get_cstr(device->DeviceName);
+    ALsizei i;
+
+    if(GetConfigValueBool(devname, "decoder", "nfc", 1) && ctrl_dist > 0.0f)
+    {
+        /* NFC is only used when AvgSpeakerDist is greater than 0, and
+         * METERS_PER_UNIT is also greater than 0. In addition, NFC can only be
+         * used when rendering to an ambisonic buffer.
+         */
+        device->AvgSpeakerDist = ctrl_dist;
+
+        device->Dry.NumChannelsPerOrder[0] = 1;
+        if(periphonic)
+            for(i = 1;i < order+1;i++)
+                device->Dry.NumChannelsPerOrder[i] = (i+1)*(i+1) - i*i;
+        else
+            for(i = 1;i < order+1;i++)
+                device->Dry.NumChannelsPerOrder[i] = (i*2+1) - ((i-1)*2+1);
+        for(;i < MAX_AMBI_ORDER+1;i++)
+            device->Dry.NumChannelsPerOrder[i] = 0;
+    }
+}
+
+static void InitDistanceComp(ALCdevice *device, const AmbDecConf *conf, const ALsizei speakermap[MAX_OUTPUT_CHANNELS])
+{
+    const char *devname = alstr_get_cstr(device->DeviceName);
+    ALfloat maxdist = 0.0f;
+    ALsizei total = 0;
+    ALsizei i;
+
+    for(i = 0;i < conf->NumSpeakers;i++)
+        maxdist = maxf(maxdist, conf->Speakers[i].Distance);
+
+    if(GetConfigValueBool(devname, "decoder", "distance-comp", 1) && maxdist > 0.0f)
+    {
+        ALfloat srate = (ALfloat)device->Frequency;
+        for(i = 0;i < conf->NumSpeakers;i++)
+        {
+            ALsizei chan = speakermap[i];
+            ALfloat delay;
+
+            /* Distance compensation only delays in steps of the sample rate.
+             * This is a bit less accurate since the delay time falls to the
+             * nearest sample time, but it's far simpler as it doesn't have to
+             * deal with phase offsets. This means at 48khz, for instance, the
+             * distance delay will be in steps of about 7 millimeters.
+             */
+            delay = floorf((maxdist-conf->Speakers[i].Distance) / SPEEDOFSOUNDMETRESPERSEC *
+                           srate + 0.5f);
+            if(delay >= (ALfloat)MAX_DELAY_LENGTH)
+                ERR("Delay for speaker \"%s\" exceeds buffer length (%f >= %u)\n",
+                    alstr_get_cstr(conf->Speakers[i].Name), delay, MAX_DELAY_LENGTH);
+
+            device->ChannelDelay[chan].Length = (ALsizei)clampf(
+                delay, 0.0f, (ALfloat)(MAX_DELAY_LENGTH-1)
+            );
+            device->ChannelDelay[chan].Gain = conf->Speakers[i].Distance / maxdist;
+            TRACE("Channel %u \"%s\" distance compensation: %d samples, %f gain\n", chan,
+                  alstr_get_cstr(conf->Speakers[i].Name), device->ChannelDelay[chan].Length,
+                device->ChannelDelay[chan].Gain
+            );
+
+            /* Round up to the next 4th sample, so each channel buffer starts
+             * 16-byte aligned.
+             */
+            total += RoundUp(device->ChannelDelay[chan].Length, 4);
+        }
+    }
+
+    if(total > 0)
+    {
+        device->ChannelDelay[0].Buffer = al_calloc(16, total * sizeof(ALfloat));
+        for(i = 1;i < MAX_OUTPUT_CHANNELS;i++)
+        {
+            size_t len = RoundUp(device->ChannelDelay[i-1].Length, 4);
+            device->ChannelDelay[i].Buffer = device->ChannelDelay[i-1].Buffer + len;
+        }
+    }
+}
 
 static void InitPanning(ALCdevice *device)
 {
@@ -548,10 +628,12 @@ static void InitPanning(ALCdevice *device)
 
     if(device->FmtChans >= DevFmtAmbi1 && device->FmtChans <= DevFmtAmbi3)
     {
-        const ALsizei *acnmap = (device->AmbiFmt == AmbiFormat_FuMa) ? FuMa2ACN : ACN2ACN;
-        const ALfloat *n3dscale = (device->AmbiFmt == AmbiFormat_FuMa) ? FuMa2N3DScale :
-                                  (device->AmbiFmt == AmbiFormat_ACN_SN3D) ? SN3D2N3DScale :
-                                  /*(device->AmbiFmt == AmbiFormat_ACN_N3D) ?*/ UnitScale;
+        const char *devname = alstr_get_cstr(device->DeviceName);
+        const ALsizei *acnmap = (device->AmbiLayout == AmbiLayout_FuMa) ? FuMa2ACN : ACN2ACN;
+        const ALfloat *n3dscale = (device->AmbiScale == AmbiNorm_FuMa) ? FuMa2N3DScale :
+                                  (device->AmbiScale == AmbiNorm_SN3D) ? SN3D2N3DScale :
+                                  /*(device->AmbiScale == AmbiNorm_N3D) ?*/ UnitScale;
+        ALfloat nfc_delay = 0.0f;
 
         count = (device->FmtChans == DevFmtAmbi3) ? 16 :
                 (device->FmtChans == DevFmtAmbi2) ? 9 :
@@ -569,6 +651,7 @@ static void InitPanning(ALCdevice *device)
         {
             device->FOAOut.Ambi = device->Dry.Ambi;
             device->FOAOut.CoeffCount = device->Dry.CoeffCount;
+            device->FOAOut.NumChannels = 0;
         }
         else
         {
@@ -582,8 +665,19 @@ static void InitPanning(ALCdevice *device)
                 device->FOAOut.Ambi.Map[i].Index = i;
             }
             device->FOAOut.CoeffCount = 0;
+            device->FOAOut.NumChannels = 4;
 
             ambiup_reset(device->AmbiUp, device);
+        }
+
+        if(ConfigValueFloat(devname, "decoder", "nfc-ref-delay", &nfc_delay))
+        {
+            nfc_delay = clampf(nfc_delay, 0.001f, 1000.0f);
+            InitNearFieldCtrl(device, nfc_delay * SPEEDOFSOUNDMETRESPERSEC,
+                              (device->FmtChans == DevFmtAmbi3) ? 3 :
+                              (device->FmtChans == DevFmtAmbi2) ? 2 : 1,
+                              true
+            );
         }
     }
     else
@@ -607,7 +701,9 @@ static void InitPanning(ALCdevice *device)
                 device->FOAOut.Ambi.Coeffs[i][j] = device->Dry.Ambi.Coeffs[i][j] * xyz_scale;
         }
         device->FOAOut.CoeffCount = 4;
+        device->FOAOut.NumChannels = 0;
     }
+    device->RealOut.NumChannels = 0;
 }
 
 static void InitCustomPanning(ALCdevice *device, const AmbDecConf *conf, const ALsizei speakermap[MAX_OUTPUT_CHANNELS])
@@ -688,18 +784,18 @@ static void InitCustomPanning(ALCdevice *device, const AmbDecConf *conf, const A
             device->FOAOut.Ambi.Coeffs[i][j] = device->Dry.Ambi.Coeffs[i][j] * xyz_scale;
     }
     device->FOAOut.CoeffCount = 4;
+    device->FOAOut.NumChannels = 0;
+
+    device->RealOut.NumChannels = 0;
+
+    InitDistanceComp(device, conf, speakermap);
 }
 
 static void InitHQPanning(ALCdevice *device, const AmbDecConf *conf, const ALsizei speakermap[MAX_OUTPUT_CHANNELS])
 {
-    const char *devname;
-    int decflags = 0;
-    size_t count;
-    size_t i;
-
-    devname = al_string_get_cstr(device->DeviceName);
-    if(GetConfigValueBool(devname, "decoder", "distance-comp", 1))
-        decflags |= BFDF_DistanceComp;
+    ALfloat avg_dist;
+    ALsizei count;
+    ALsizei i;
 
     if((conf->ChanMask&AMBI_PERIPHONIC_MASK))
     {
@@ -731,24 +827,52 @@ static void InitHQPanning(ALCdevice *device, const AmbDecConf *conf, const ALsiz
         (conf->ChanMask > 0xf) ? (conf->ChanMask > 0x1ff) ? "third" : "second" : "first",
         (conf->ChanMask&AMBI_PERIPHONIC_MASK) ? " periphonic" : ""
     );
-    bformatdec_reset(device->AmbiDecoder, conf, count, device->Frequency,
-                     speakermap, decflags);
+    bformatdec_reset(device->AmbiDecoder, conf, count, device->Frequency, speakermap);
 
-    if(bformatdec_getOrder(device->AmbiDecoder) < 2)
+    if(!(conf->ChanMask > 0xf))
     {
         device->FOAOut.Ambi = device->Dry.Ambi;
         device->FOAOut.CoeffCount = device->Dry.CoeffCount;
+        device->FOAOut.NumChannels = 0;
     }
     else
     {
         memset(&device->FOAOut.Ambi, 0, sizeof(device->FOAOut.Ambi));
-        for(i = 0;i < 4;i++)
+        if((conf->ChanMask&AMBI_PERIPHONIC_MASK))
         {
-            device->FOAOut.Ambi.Map[i].Scale = 1.0f;
-            device->FOAOut.Ambi.Map[i].Index = i;
+            count = 4;
+            for(i = 0;i < count;i++)
+            {
+                device->FOAOut.Ambi.Map[i].Scale = 1.0f;
+                device->FOAOut.Ambi.Map[i].Index = i;
+            }
+        }
+        else
+        {
+            static const int map[3] = { 0, 1, 3 };
+            count = 3;
+            for(i = 0;i < count;i++)
+            {
+                device->FOAOut.Ambi.Map[i].Scale = 1.0f;
+                device->FOAOut.Ambi.Map[i].Index = map[i];
+            }
         }
         device->FOAOut.CoeffCount = 0;
+        device->FOAOut.NumChannels = count;
     }
+
+    device->RealOut.NumChannels = ChannelsFromDevFmt(device->FmtChans);
+
+    avg_dist = 0.0f;
+    for(i = 0;i < conf->NumSpeakers;i++)
+        avg_dist += conf->Speakers[i].Distance;
+    avg_dist /= (ALfloat)conf->NumSpeakers;
+    InitNearFieldCtrl(device, avg_dist,
+        (conf->ChanMask > 0x1ff) ? 3 : (conf->ChanMask > 0xf) ? 2 : 1,
+        !!(conf->ChanMask&AMBI_PERIPHONIC_MASK)
+    );
+
+    InitDistanceComp(device, conf, speakermap);
 }
 
 static void InitHrtfPanning(ALCdevice *device, bool hoa_mode)
@@ -802,11 +926,14 @@ static void InitHrtfPanning(ALCdevice *device, bool hoa_mode)
         { { 1.43315266e-001f,  0.00000000e+000f, -1.90399923e-001f,  0.00000000e+000f,  0.00000000e+000f,  0.00000000e+000f,  1.18020996e-001f,  0.00000000e+000f,  0.00000000e+000f }, { 7.26741039e-002f,  0.00000000e+000f, -1.24646009e-001f,  0.00000000e+000f,  0.00000000e+000f,  0.00000000e+000f,  1.49618920e-001f,  0.00000000e+000f,  0.00000000e+000f } },
     };
     const ALfloat (*AmbiMatrix)[2][MAX_AMBI_COEFFS] = hoa_mode ? AmbiMatrixHOA : AmbiMatrixFOA;
-    size_t count = hoa_mode ? 9 : 4;
-    size_t i;
+    ALsizei count = hoa_mode ? 9 : 4;
+    size_t sizeof_hrtfstate;
+    ALsizei i;
 
-    static_assert(9 <= COUNTOF(device->Hrtf.Coeffs), "ALCdevice::Hrtf.Values/Coeffs size is too small");
     static_assert(COUNTOF(AmbiPoints) <= HRTF_AMBI_MAX_CHANNELS, "HRTF_AMBI_MAX_CHANNELS is too small");
+
+    sizeof_hrtfstate = offsetof(DirectHrtfState, Chan[count]);
+    device->Hrtf = al_calloc(16, sizeof_hrtfstate);
 
     for(i = 0;i < count;i++)
     {
@@ -820,6 +947,7 @@ static void InitHrtfPanning(ALCdevice *device, bool hoa_mode)
     {
         device->FOAOut.Ambi = device->Dry.Ambi;
         device->FOAOut.CoeffCount = device->Dry.CoeffCount;
+        device->FOAOut.NumChannels = 0;
     }
     else
     {
@@ -830,18 +958,20 @@ static void InitHrtfPanning(ALCdevice *device, bool hoa_mode)
             device->FOAOut.Ambi.Map[i].Index = i;
         }
         device->FOAOut.CoeffCount = 0;
+        device->FOAOut.NumChannels = 4;
 
         ambiup_reset(device->AmbiUp, device);
     }
 
-    memset(device->Hrtf.Coeffs, 0, sizeof(device->Hrtf.Coeffs));
-    device->Hrtf.IrSize = BuildBFormatHrtf(device->Hrtf.Handle,
-        device->Hrtf.Coeffs, device->Dry.NumChannels,
+    device->RealOut.NumChannels = ChannelsFromDevFmt(device->FmtChans);
+
+    device->Hrtf->IrSize = BuildBFormatHrtf(device->HrtfHandle,
+        device->Hrtf, device->Dry.NumChannels,
         AmbiPoints, AmbiMatrix, COUNTOF(AmbiPoints)
     );
 
     /* Round up to the nearest multiple of 8 */
-    device->Hrtf.IrSize = (device->Hrtf.IrSize+7)&~7;
+    device->Hrtf->IrSize = (device->Hrtf->IrSize+7)&~7;
 }
 
 static void InitUhjPanning(ALCdevice *device)
@@ -860,22 +990,39 @@ static void InitUhjPanning(ALCdevice *device)
 
     device->FOAOut.Ambi = device->Dry.Ambi;
     device->FOAOut.CoeffCount = device->Dry.CoeffCount;
+    device->FOAOut.NumChannels = 0;
+
+    device->RealOut.NumChannels = ChannelsFromDevFmt(device->FmtChans);
 }
 
 void aluInitRenderer(ALCdevice *device, ALint hrtf_id, enum HrtfRequestMode hrtf_appreq, enum HrtfRequestMode hrtf_userreq)
 {
+    /* Hold the HRTF the device last used, in case it's used again. */
+    struct Hrtf *old_hrtf = device->HrtfHandle;
     const char *mode;
     bool headphones;
     int bs2blevel;
     size_t i;
 
-    device->Hrtf.Handle = NULL;
-    al_string_clear(&device->Hrtf.Name);
+    al_free(device->Hrtf);
+    device->Hrtf = NULL;
+    device->HrtfHandle = NULL;
+    alstr_clear(&device->HrtfName);
     device->Render_Mode = NormalRender;
 
     memset(&device->Dry.Ambi, 0, sizeof(device->Dry.Ambi));
     device->Dry.CoeffCount = 0;
     device->Dry.NumChannels = 0;
+    for(i = 0;i < MAX_AMBI_ORDER+1;i++)
+        device->Dry.NumChannelsPerOrder[i] = 0;
+
+    device->AvgSpeakerDist = 0.0f;
+    memset(device->ChannelDelay, 0, sizeof(device->ChannelDelay));
+    for(i = 0;i < MAX_OUTPUT_CHANNELS;i++)
+    {
+        device->ChannelDelay[i].Gain = 1.0f;
+        device->ChannelDelay[i].Length = 0;
+    }
 
     if(device->FmtChans != DevFmtStereo)
     {
@@ -883,17 +1030,20 @@ void aluInitRenderer(ALCdevice *device, ALint hrtf_id, enum HrtfRequestMode hrtf
         const char *devname, *layout = NULL;
         AmbDecConf conf, *pconf = NULL;
 
+        if(old_hrtf)
+            Hrtf_DecRef(old_hrtf);
+        old_hrtf = NULL;
         if(hrtf_appreq == Hrtf_Enable)
-            device->Hrtf.Status = ALC_HRTF_UNSUPPORTED_FORMAT_SOFT;
+            device->HrtfStatus = ALC_HRTF_UNSUPPORTED_FORMAT_SOFT;
 
         ambdec_init(&conf);
 
-        devname = al_string_get_cstr(device->DeviceName);
+        devname = alstr_get_cstr(device->DeviceName);
         switch(device->FmtChans)
         {
             case DevFmtQuad: layout = "quad"; break;
-            case DevFmtX51: layout = "surround51"; break;
-            case DevFmtX51Rear: layout = "surround51rear"; break;
+            case DevFmtX51: /* fall-through */
+            case DevFmtX51Rear: layout = "surround51"; break;
             case DevFmtX61: layout = "surround61"; break;
             case DevFmtX71: layout = "surround71"; break;
             /* Mono, Stereo, and Ambisonics output don't use custom decoders. */
@@ -965,7 +1115,7 @@ void aluInitRenderer(ALCdevice *device, ALint hrtf_id, enum HrtfRequestMode hrtf
     if(device->Type != Loopback)
     {
         const char *mode;
-        if(ConfigValueStr(al_string_get_cstr(device->DeviceName), NULL, "stereo-mode", &mode))
+        if(ConfigValueStr(alstr_get_cstr(device->DeviceName), NULL, "stereo-mode", &mode))
         {
             if(strcasecmp(mode, "headphones") == 0)
                 headphones = true;
@@ -982,53 +1132,63 @@ void aluInitRenderer(ALCdevice *device, ALint hrtf_id, enum HrtfRequestMode hrtf
                        (hrtf_appreq == Hrtf_Enable);
         if(!usehrtf) goto no_hrtf;
 
-        device->Hrtf.Status = ALC_HRTF_ENABLED_SOFT;
+        device->HrtfStatus = ALC_HRTF_ENABLED_SOFT;
         if(headphones && hrtf_appreq != Hrtf_Disable)
-            device->Hrtf.Status = ALC_HRTF_HEADPHONES_DETECTED_SOFT;
+            device->HrtfStatus = ALC_HRTF_HEADPHONES_DETECTED_SOFT;
     }
     else
     {
         if(hrtf_userreq != Hrtf_Enable)
         {
             if(hrtf_appreq == Hrtf_Enable)
-                device->Hrtf.Status = ALC_HRTF_DENIED_SOFT;
+                device->HrtfStatus = ALC_HRTF_DENIED_SOFT;
             goto no_hrtf;
         }
-        device->Hrtf.Status = ALC_HRTF_REQUIRED_SOFT;
+        device->HrtfStatus = ALC_HRTF_REQUIRED_SOFT;
     }
 
-    if(VECTOR_SIZE(device->Hrtf.List) == 0)
+    if(VECTOR_SIZE(device->HrtfList) == 0)
     {
-        VECTOR_DEINIT(device->Hrtf.List);
-        device->Hrtf.List = EnumerateHrtf(device->DeviceName);
+        VECTOR_DEINIT(device->HrtfList);
+        device->HrtfList = EnumerateHrtf(device->DeviceName);
     }
 
-    if(hrtf_id >= 0 && (size_t)hrtf_id < VECTOR_SIZE(device->Hrtf.List))
+    if(hrtf_id >= 0 && (size_t)hrtf_id < VECTOR_SIZE(device->HrtfList))
     {
-        const HrtfEntry *entry = &VECTOR_ELEM(device->Hrtf.List, hrtf_id);
-        if(entry->hrtf->sampleRate == device->Frequency)
+        const EnumeratedHrtf *entry = &VECTOR_ELEM(device->HrtfList, hrtf_id);
+        struct Hrtf *hrtf = GetLoadedHrtf(entry->hrtf);
+        if(hrtf && hrtf->sampleRate == device->Frequency)
         {
-            device->Hrtf.Handle = entry->hrtf;
-            al_string_copy(&device->Hrtf.Name, entry->name);
+            device->HrtfHandle = hrtf;
+            alstr_copy(&device->HrtfName, entry->name);
         }
+        else if(hrtf)
+            Hrtf_DecRef(hrtf);
     }
 
-    for(i = 0;!device->Hrtf.Handle && i < VECTOR_SIZE(device->Hrtf.List);i++)
+    for(i = 0;!device->HrtfHandle && i < VECTOR_SIZE(device->HrtfList);i++)
     {
-        const HrtfEntry *entry = &VECTOR_ELEM(device->Hrtf.List, i);
-        if(entry->hrtf->sampleRate == device->Frequency)
+        const EnumeratedHrtf *entry = &VECTOR_ELEM(device->HrtfList, i);
+        struct Hrtf *hrtf = GetLoadedHrtf(entry->hrtf);
+        if(hrtf && hrtf->sampleRate == device->Frequency)
         {
-            device->Hrtf.Handle = entry->hrtf;
-            al_string_copy(&device->Hrtf.Name, entry->name);
+            device->HrtfHandle = hrtf;
+            alstr_copy(&device->HrtfName, entry->name);
         }
+        else if(hrtf)
+            Hrtf_DecRef(hrtf);
     }
 
-    if(device->Hrtf.Handle)
+    if(device->HrtfHandle)
     {
         bool hoa_mode;
 
+        if(old_hrtf)
+            Hrtf_DecRef(old_hrtf);
+        old_hrtf = NULL;
+
         device->Render_Mode = HrtfRender;
-        if(ConfigValueStr(al_string_get_cstr(device->DeviceName), NULL, "hrtf-mode", &mode))
+        if(ConfigValueStr(alstr_get_cstr(device->DeviceName), NULL, "hrtf-mode", &mode))
         {
             if(strcasecmp(mode, "full") == 0)
                 device->Render_Mode = HrtfRender;
@@ -1056,15 +1216,20 @@ void aluInitRenderer(ALCdevice *device, ALint hrtf_id, enum HrtfRequestMode hrtf
 
         TRACE("%s HRTF rendering enabled, using \"%s\"\n",
             ((device->Render_Mode == HrtfRender) ? "Full" : "Basic"),
-            al_string_get_cstr(device->Hrtf.Name)
+            alstr_get_cstr(device->HrtfName)
         );
         InitHrtfPanning(device, hoa_mode);
         return;
     }
-    device->Hrtf.Status = ALC_HRTF_UNSUPPORTED_FORMAT_SOFT;
+    device->HrtfStatus = ALC_HRTF_UNSUPPORTED_FORMAT_SOFT;
 
 no_hrtf:
+    if(old_hrtf)
+        Hrtf_DecRef(old_hrtf);
+    old_hrtf = NULL;
     TRACE("HRTF disabled\n");
+
+    device->Render_Mode = StereoPair;
 
     ambiup_free(device->AmbiUp);
     device->AmbiUp = NULL;
@@ -1072,12 +1237,11 @@ no_hrtf:
     bs2blevel = ((headphones && hrtf_appreq != Hrtf_Disable) ||
                  (hrtf_appreq == Hrtf_Enable)) ? 5 : 0;
     if(device->Type != Loopback)
-        ConfigValueInt(al_string_get_cstr(device->DeviceName), NULL, "cf_level", &bs2blevel);
+        ConfigValueInt(alstr_get_cstr(device->DeviceName), NULL, "cf_level", &bs2blevel);
     if(bs2blevel > 0 && bs2blevel <= 6)
     {
         device->Bs2b = al_calloc(16, sizeof(*device->Bs2b));
         bs2b_set_params(device->Bs2b, bs2blevel, device->Frequency);
-        device->Render_Mode = StereoPair;
         TRACE("BS2B enabled\n");
         InitPanning(device);
         return;
@@ -1085,13 +1249,12 @@ no_hrtf:
 
     TRACE("BS2B disabled\n");
 
-    device->Render_Mode = NormalRender;
-    if(ConfigValueStr(al_string_get_cstr(device->DeviceName), NULL, "stereo-panning", &mode))
+    if(ConfigValueStr(alstr_get_cstr(device->DeviceName), NULL, "stereo-encoding", &mode))
     {
-        if(strcasecmp(mode, "paired") == 0)
-            device->Render_Mode = StereoPair;
-        else if(strcasecmp(mode, "uhj") != 0)
-            ERR("Unexpected stereo-panning: %s\n", mode);
+        if(strcasecmp(mode, "uhj") == 0)
+            device->Render_Mode = NormalRender;
+        else if(strcasecmp(mode, "panpot") != 0)
+            ERR("Unexpected stereo-encoding: %s\n", mode);
     }
     if(device->Render_Mode == NormalRender)
     {

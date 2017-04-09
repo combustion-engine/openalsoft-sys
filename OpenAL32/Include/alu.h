@@ -17,6 +17,7 @@
 
 #include "hrtf.h"
 #include "align.h"
+#include "nfcfilter.h"
 #include "math_defs.h"
 
 
@@ -35,9 +36,9 @@ extern "C" {
 
 struct ALsource;
 struct ALsourceProps;
+struct ALbufferlistitem;
 struct ALvoice;
 struct ALeffectslot;
-struct ALbuffer;
 
 
 /* The number of distinct scale and phase intervals within the filter table. */
@@ -61,6 +62,10 @@ typedef struct BsincState {
         const ALfloat *spDelta;  /* Scale-phase deltas. */
     } coeffs[BSINC_PHASE_COUNT];
 } BsincState;
+
+typedef union InterpState {
+    BsincState bsinc;
+} InterpState;
 
 
 typedef union aluVector {
@@ -111,21 +116,22 @@ enum ActiveFilters {
 
 
 typedef struct MixHrtfParams {
-    const HrtfParams *Target;
-    HrtfParams *Current;
-    struct {
-        alignas(16) ALfloat Coeffs[HRIR_LENGTH][2];
-        ALsizei Delay[2];
-    } Steps;
+    const ALfloat (*Coeffs)[2];
+    ALsizei Delay[2];
+    ALfloat Gain;
+    ALfloat GainStep;
 } MixHrtfParams;
+
 
 typedef struct DirectParams {
     enum ActiveFilters FilterType;
     ALfilterState LowPass;
     ALfilterState HighPass;
 
+    NfcFilter NFCtrlFilter[MAX_AMBI_ORDER];
+
     struct {
-        HrtfParams Current;
+        HrtfParams Old;
         HrtfParams Target;
         HrtfState State;
     } Hrtf;
@@ -147,9 +153,65 @@ typedef struct SendParams {
     } Gains;
 } SendParams;
 
+/* If not 'moving', gain targets are used directly without fading. */
+#define VOICE_IS_MOVING (1<<0)
+#define VOICE_IS_HRTF   (1<<1)
+#define VOICE_HAS_NFC   (1<<2)
 
-typedef const ALfloat* (*ResamplerFunc)(const BsincState *state,
-    const ALfloat *restrict src, ALuint frac, ALint increment,
+typedef struct ALvoice {
+    struct ALsourceProps *Props;
+
+    ATOMIC(struct ALsource*) Source;
+    ATOMIC(bool) Playing;
+
+    /* Current buffer queue item being played. */
+    ATOMIC(struct ALbufferlistitem*) current_buffer;
+
+    /**
+     * Source offset in samples, relative to the currently playing buffer, NOT
+     * the whole queue, and the fractional (fixed-point) offset to the next
+     * sample.
+     */
+    ATOMIC(ALuint) position;
+    ATOMIC(ALsizei) position_fraction;
+
+    /**
+     * Number of channels and bytes-per-sample for the attached source's
+     * buffer(s).
+     */
+    ALsizei NumChannels;
+    ALsizei SampleSize;
+
+    /** Current target parameters used for mixing. */
+    ALint Step;
+
+    ALuint Flags;
+
+    ALuint Offset; /* Number of output samples mixed since starting. */
+
+    alignas(16) ALfloat PrevSamples[MAX_INPUT_CHANNELS][MAX_PRE_SAMPLES];
+
+    InterpState ResampleState;
+
+    struct {
+        DirectParams Params[MAX_INPUT_CHANNELS];
+
+        ALfloat (*Buffer)[BUFFERSIZE];
+        ALsizei Channels;
+        ALsizei ChannelsPerOrder[MAX_AMBI_ORDER+1];
+    } Direct;
+
+    struct {
+        SendParams Params[MAX_INPUT_CHANNELS];
+
+        ALfloat (*Buffer)[BUFFERSIZE];
+        ALsizei Channels;
+    } Send[];
+} ALvoice;
+
+
+typedef const ALfloat* (*ResamplerFunc)(const InterpState *state,
+    const ALfloat *restrict src, ALsizei frac, ALint increment,
     ALfloat *restrict dst, ALsizei dstlen
 );
 
@@ -161,13 +223,13 @@ typedef void (*RowMixerFunc)(ALfloat *OutBuffer, const ALfloat *gains,
                              const ALfloat (*restrict data)[BUFFERSIZE], ALsizei InChans,
                              ALsizei InPos, ALsizei BufferSize);
 typedef void (*HrtfMixerFunc)(ALfloat *restrict LeftOut, ALfloat *restrict RightOut,
-                              const ALfloat *data, ALsizei Counter, ALsizei Offset, ALsizei OutPos,
-                              const ALsizei IrSize, const MixHrtfParams *hrtfparams,
+                              const ALfloat *data, ALsizei Offset, ALsizei OutPos,
+                              const ALsizei IrSize, MixHrtfParams *hrtfparams,
                               HrtfState *hrtfstate, ALsizei BufferSize);
 typedef void (*HrtfDirectMixerFunc)(ALfloat *restrict LeftOut, ALfloat *restrict RightOut,
                                     const ALfloat *data, ALsizei Offset, const ALsizei IrSize,
-                                    ALfloat (*restrict Coeffs)[2], ALfloat (*restrict Values)[2],
-                                    ALsizei BufferSize);
+                                    const ALfloat (*restrict Coeffs)[2],
+                                    ALfloat (*restrict Values)[2], ALsizei BufferSize);
 
 
 #define GAIN_MIX_MAX  (16.0f) /* +24dB */
@@ -225,13 +287,8 @@ inline ALuint64 clampu64(ALuint64 val, ALuint64 min, ALuint64 max)
 { return minu64(max, maxu64(min, val)); }
 
 
-union ResamplerCoeffs {
-    ALfloat FIR4[FRACTIONONE][4];
-    ALfloat FIR8[FRACTIONONE][8];
-};
-extern alignas(16) union ResamplerCoeffs ResampleCoeffs;
-
 extern alignas(16) const ALfloat bsincTab[18840];
+extern alignas(16) const ALfloat sinc4Tab[FRACTIONONE][4];
 
 
 inline ALfloat lerp(ALfloat val1, ALfloat val2, ALfloat mu)
@@ -240,14 +297,8 @@ inline ALfloat lerp(ALfloat val1, ALfloat val2, ALfloat mu)
 }
 inline ALfloat resample_fir4(ALfloat val0, ALfloat val1, ALfloat val2, ALfloat val3, ALuint frac)
 {
-    const ALfloat *k = ResampleCoeffs.FIR4[frac];
-    return k[0]*val0 + k[1]*val1 + k[2]*val2 + k[3]*val3;
-}
-inline ALfloat resample_fir8(ALfloat val0, ALfloat val1, ALfloat val2, ALfloat val3, ALfloat val4, ALfloat val5, ALfloat val6, ALfloat val7, ALuint frac)
-{
-    const ALfloat *k = ResampleCoeffs.FIR8[frac];
-    return k[0]*val0 + k[1]*val1 + k[2]*val2 + k[3]*val3 +
-           k[4]*val4 + k[5]*val5 + k[6]*val6 + k[7]*val7;
+    return sinc4Tab[frac][0]*val0 + sinc4Tab[frac][1]*val1 +
+           sinc4Tab[frac][2]*val2 + sinc4Tab[frac][3]*val3;
 }
 
 
@@ -282,25 +333,31 @@ void aluInitEffectPanning(struct ALeffectslot *slot);
 void CalcDirectionCoeffs(const ALfloat dir[3], ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS]);
 
 /**
- * CalcXYZCoeffs
- *
- * Same as CalcDirectionCoeffs except the direction is specified as separate x,
- * y, and z parameters instead of an array.
- */
-inline void CalcXYZCoeffs(ALfloat x, ALfloat y, ALfloat z, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS])
-{
-    ALfloat dir[3] = { x, y, z };
-    CalcDirectionCoeffs(dir, spread, coeffs);
-}
-
-/**
  * CalcAngleCoeffs
  *
  * Calculates ambisonic coefficients based on azimuth and elevation. The
  * azimuth and elevation parameters are in radians, going right and up
  * respectively.
  */
-void CalcAngleCoeffs(ALfloat azimuth, ALfloat elevation, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS]);
+inline void CalcAngleCoeffs(ALfloat azimuth, ALfloat elevation, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS])
+{
+    ALfloat dir[3] = {
+        sinf(azimuth) * cosf(elevation),
+        sinf(elevation),
+        -cosf(azimuth) * cosf(elevation)
+    };
+    CalcDirectionCoeffs(dir, spread, coeffs);
+}
+
+/**
+ * CalcAnglePairwiseCoeffs
+ *
+ * Calculates ambisonic coefficients based on azimuth and elevation. The
+ * azimuth and elevation parameters are in radians, going right and up
+ * respectively. This pairwise variant warps the result such that +30 azimuth
+ * is full right, and -30 azimuth is full left.
+ */
+void CalcAnglePairwiseCoeffs(ALfloat azimuth, ALfloat elevation, ALfloat spread, ALfloat coeffs[MAX_AMBI_COEFFS]);
 
 /**
  * ComputeAmbientGains
@@ -348,7 +405,7 @@ void ComputeFirstOrderGainsMC(const ChannelConfig *chancoeffs, ALsizei numchans,
 void ComputeFirstOrderGainsBF(const BFChannelConfig *chanmap, ALsizei numchans, const ALfloat mtx[4], ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS]);
 
 
-void MixSource(struct ALvoice *voice, struct ALsource *Source, ALCdevice *Device, ALsizei SamplesToDo);
+ALboolean MixSource(struct ALvoice *voice, struct ALsource *Source, ALCdevice *Device, ALsizei SamplesToDo);
 
 void aluMixData(ALCdevice *device, ALvoid *buffer, ALsizei size);
 /* Caller must lock the device. */

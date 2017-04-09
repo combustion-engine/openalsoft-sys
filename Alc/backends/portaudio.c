@@ -177,7 +177,9 @@ static int ALCportPlayback_WriteCallback(const void *UNUSED(inputBuffer), void *
 {
     ALCportPlayback *self = userData;
 
+    ALCportPlayback_lock(self);
     aluMixData(STATIC_CAST(ALCbackend, self)->mDevice, outputBuffer, framesPerBuffer);
+    ALCportPlayback_unlock(self);
     return 0;
 }
 
@@ -243,7 +245,7 @@ retry_open:
         return ALC_INVALID_VALUE;
     }
 
-    al_string_copy_cstr(&device->DeviceName, name);
+    alstr_copy_cstr(&device->DeviceName, name);
 
     return ALC_NO_ERROR;
 
@@ -443,7 +445,7 @@ static ALCenum ALCportCapture_open(ALCportCapture *self, const ALCchar *name)
         return ALC_INVALID_VALUE;
     }
 
-    al_string_copy_cstr(&device->DeviceName, name);
+    alstr_copy_cstr(&device->DeviceName, name);
 
     return ALC_NO_ERROR;
 }

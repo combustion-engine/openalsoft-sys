@@ -12,18 +12,18 @@
 #include "mixer_defs.h"
 
 
-const ALfloat *Resample_bsinc32_SSE(const BsincState *state, const ALfloat *restrict src,
-                                    ALuint frac, ALint increment, ALfloat *restrict dst,
+const ALfloat *Resample_bsinc32_SSE(const InterpState *state, const ALfloat *restrict src,
+                                    ALsizei frac, ALint increment, ALfloat *restrict dst,
                                     ALsizei dstlen)
 {
-    const __m128 sf4 = _mm_set1_ps(state->sf);
-    const ALsizei m = state->m;
-    const ALint l = state->l;
+    const __m128 sf4 = _mm_set1_ps(state->bsinc.sf);
+    const ALsizei m = state->bsinc.m;
     const ALfloat *fil, *scd, *phd, *spd;
-    ALsizei j_s, pi, j_f, i;
+    ALsizei pi, i, j;
     ALfloat pf;
     __m128 r4;
 
+    src += state->bsinc.l;
     for(i = 0;i < dstlen;i++)
     {
         // Calculate the phase index and factor.
@@ -32,32 +32,30 @@ const ALfloat *Resample_bsinc32_SSE(const BsincState *state, const ALfloat *rest
         pf = (frac & ((1<<FRAC_PHASE_BITDIFF)-1)) * (1.0f/(1<<FRAC_PHASE_BITDIFF));
 #undef FRAC_PHASE_BITDIFF
 
-        fil = state->coeffs[pi].filter;
-        scd = state->coeffs[pi].scDelta;
-        phd = state->coeffs[pi].phDelta;
-        spd = state->coeffs[pi].spDelta;
+        fil = ASSUME_ALIGNED(state->bsinc.coeffs[pi].filter, 16);
+        scd = ASSUME_ALIGNED(state->bsinc.coeffs[pi].scDelta, 16);
+        phd = ASSUME_ALIGNED(state->bsinc.coeffs[pi].phDelta, 16);
+        spd = ASSUME_ALIGNED(state->bsinc.coeffs[pi].spDelta, 16);
 
         // Apply the scale and phase interpolated filter.
         r4 = _mm_setzero_ps();
         {
             const __m128 pf4 = _mm_set1_ps(pf);
-            for(j_f = 0,j_s = l;j_f < m;j_f+=4,j_s+=4)
+#define LD4(x) _mm_load_ps(x)
+#define ULD4(x) _mm_loadu_ps(x)
+#define MLA4(x, y, z) _mm_add_ps(x, _mm_mul_ps(y, z))
+            for(j = 0;j < m;j+=4)
             {
-                const __m128 f4 = _mm_add_ps(
-                    _mm_add_ps(
-                        _mm_load_ps(&fil[j_f]),
-                        _mm_mul_ps(sf4, _mm_load_ps(&scd[j_f]))
-                    ),
-                    _mm_mul_ps(
-                        pf4,
-                        _mm_add_ps(
-                            _mm_load_ps(&phd[j_f]),
-                            _mm_mul_ps(sf4, _mm_load_ps(&spd[j_f]))
-                        )
-                    )
+                /* f = ((fil + sf*scd) + pf*(phd + sf*spd)) */
+                const __m128 f4 = MLA4(MLA4(LD4(&fil[j]), sf4, LD4(&scd[j])),
+                    pf4, MLA4(LD4(&phd[j]), sf4, LD4(&spd[j]))
                 );
-                r4 = _mm_add_ps(r4, _mm_mul_ps(f4, _mm_loadu_ps(&src[j_s])));
+                /* r += f*src */
+                r4 = MLA4(r4, f4, ULD4(&src[j]));
             }
+#undef MLA4
+#undef ULD4
+#undef LD4
         }
         r4 = _mm_add_ps(r4, _mm_shuffle_ps(r4, r4, _MM_SHUFFLE(0, 1, 2, 3)));
         r4 = _mm_add_ps(r4, _mm_movehl_ps(r4, r4));
@@ -71,71 +69,9 @@ const ALfloat *Resample_bsinc32_SSE(const BsincState *state, const ALfloat *rest
 }
 
 
-static inline void ApplyCoeffsStep(ALsizei Offset, ALfloat (*restrict Values)[2],
-                                   const ALsizei IrSize,
-                                   ALfloat (*restrict Coeffs)[2],
-                                   const ALfloat (*restrict CoeffStep)[2],
-                                   ALfloat left, ALfloat right)
-{
-    const __m128 lrlr = _mm_setr_ps(left, right, left, right);
-    __m128 coeffs, deltas, imp0, imp1;
-    __m128 vals = _mm_setzero_ps();
-    ALsizei i;
-
-    if((Offset&1))
-    {
-        const ALsizei o0 = Offset&HRIR_MASK;
-        const ALsizei o1 = (Offset+IrSize-1)&HRIR_MASK;
-
-        coeffs = _mm_load_ps(&Coeffs[0][0]);
-        deltas = _mm_load_ps(&CoeffStep[0][0]);
-        vals = _mm_loadl_pi(vals, (__m64*)&Values[o0][0]);
-        imp0 = _mm_mul_ps(lrlr, coeffs);
-        coeffs = _mm_add_ps(coeffs, deltas);
-        vals = _mm_add_ps(imp0, vals);
-        _mm_store_ps(&Coeffs[0][0], coeffs);
-        _mm_storel_pi((__m64*)&Values[o0][0], vals);
-        for(i = 1;i < IrSize-1;i += 2)
-        {
-            const ALsizei o2 = (Offset+i)&HRIR_MASK;
-
-            coeffs = _mm_load_ps(&Coeffs[i+1][0]);
-            deltas = _mm_load_ps(&CoeffStep[i+1][0]);
-            vals = _mm_load_ps(&Values[o2][0]);
-            imp1 = _mm_mul_ps(lrlr, coeffs);
-            coeffs = _mm_add_ps(coeffs, deltas);
-            imp0 = _mm_shuffle_ps(imp0, imp1, _MM_SHUFFLE(1, 0, 3, 2));
-            vals = _mm_add_ps(imp0, vals);
-            _mm_store_ps(&Coeffs[i+1][0], coeffs);
-            _mm_store_ps(&Values[o2][0], vals);
-            imp0 = imp1;
-        }
-        vals = _mm_loadl_pi(vals, (__m64*)&Values[o1][0]);
-        imp0 = _mm_movehl_ps(imp0, imp0);
-        vals = _mm_add_ps(imp0, vals);
-        _mm_storel_pi((__m64*)&Values[o1][0], vals);
-    }
-    else
-    {
-        for(i = 0;i < IrSize;i += 2)
-        {
-            const ALsizei o = (Offset + i)&HRIR_MASK;
-
-            coeffs = _mm_load_ps(&Coeffs[i][0]);
-            deltas = _mm_load_ps(&CoeffStep[i][0]);
-            vals = _mm_load_ps(&Values[o][0]);
-            imp0 = _mm_mul_ps(lrlr, coeffs);
-            coeffs = _mm_add_ps(coeffs, deltas);
-            vals = _mm_add_ps(imp0, vals);
-            _mm_store_ps(&Coeffs[i][0], coeffs);
-            _mm_store_ps(&Values[o][0], vals);
-        }
-    }
-}
-
 static inline void ApplyCoeffs(ALsizei Offset, ALfloat (*restrict Values)[2],
                                const ALsizei IrSize,
-                               ALfloat (*restrict Coeffs)[2],
+                               const ALfloat (*restrict Coeffs)[2],
                                ALfloat left, ALfloat right)
 {
     const __m128 lrlr = _mm_setr_ps(left, right, left, right);
@@ -143,6 +79,8 @@ static inline void ApplyCoeffs(ALsizei Offset, ALfloat (*restrict Values)[2],
     __m128 coeffs;
     ALsizei i;
 
+    Values = ASSUME_ALIGNED(Values, 16);
+    Coeffs = ASSUME_ALIGNED(Coeffs, 16);
     if((Offset&1))
     {
         const ALsizei o0 = Offset&HRIR_MASK;
